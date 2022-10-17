@@ -8,4 +8,20 @@ O MVP do TatuZap consiste de dois repositórios, o ETLTatuZap, reponsável por c
 
 ## BotTatuZap
 
-BotTatuZap
+
+Os códigos presentes neste repositório estão relacionados a geração da I.A utilizada no TatuZap, capaz de realizar uma conversa que atenda as requisições do usuário, utilizando informações fornecidas pelo mesmo em conjunto com nosso back-end (https://github.com/TatuZap/ETLTatuZap).
+
+Dentro do BotTatuZap, pretendemos utilizar as seguintes tecnologias:
+
+* Python(3.9)
+
+* NLTK
+
+* TensorFlow
+
+* Spacy
+
+
+
+
+
