@@ -68,10 +68,14 @@ class TatuIA:
         pass 
     
     def __valid_path__(self):
-        pass 
+        if os.path.exists(self.dfa_file):
+            return True
+        else:
+            return False
     
     def __load_data__(self):
-        pass
+        if self.__valid_path__(self):
+            return json.load(self.dfa_file)
     
     def get_reply(self, user_message):
         pass 
