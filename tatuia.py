@@ -68,10 +68,7 @@ class TatuIA:
         pass 
     
     def __valid_path__(self):
-        if os.path.exists(self.dfa_file):
-            return True
-        else:
-            return False
+        return os.path.exists(self.dfa_file)
     
     def __load_data__(self):
         if self.__valid_path__(self):
