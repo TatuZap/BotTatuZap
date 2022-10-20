@@ -32,19 +32,17 @@ class TatuIA:
 
     def __load_model(self):
         current_filepath = os.getcwd()
-        model_folder = "/model_bot/model"
+        model_folder = "model_bot"
         complete_path = os.path.join(current_filepath, model_folder)
-        
         if os.path.exists(complete_path):
-            self.model = tf.keras.models.load_model(current_filepath + model_folder)
+            self.model = tf.keras.models.load_model(complete_path + "/model")
         else:
             self.model = self.__simple_ann()
             self.__train()
             os.mkdir(complete_path)
-            self.model.save(current_filepath + model_folder)
+            self.model.save(complete_path + "/model")
 
     def __simple_ann(self):
-        
         input_shape = (self.message_utils.X.shape[1],)
         output_shape = self.message_utils.Y.shape[1]
         # the deep learning model
@@ -118,7 +116,7 @@ class TatuIA:
                 result = random.choice(idx['responses'])
                 break
 
-        return result
+        return result 
 
     def is_ra(message):
         ra = re.findall('\d+', message)
