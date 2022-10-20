@@ -1,5 +1,6 @@
-from email import message
 import os
+from pyexpat import model
+from unittest import result
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
 # tensorflow tags
 #0 = all messages are logged (default behavior)
@@ -21,13 +22,27 @@ from keras.layers import Dense, Activation, Dropout
 from keras.optimizers import SGD
 
 class TatuIA:
-    def __init__(self, dfa_file_path , message_utils ):
+    def __init__(self, dfa_file_path , message_utils: MessageUtils ):
         self.dfa_file = dfa_file_path
         self.message_utils = message_utils # classe de pré-processamento de textos
         self.model = self.__simple_ann() # neuranet do bot
-        self.__train()
+        self.__load_model()
+        self.PROB_SAFE_VALUE = 0.25
+    
+
+    def __load_model(self):
+        current_filepath = os.getcwd()
+        model_folder = "/model_bot/model"
+        complete_path = os.path.join(current_filepath, model_folder)
         
-        
+        if os.path.exists(complete_path):
+            self.model = tf.keras.models.load_model(current_filepath + model_folder)
+        else:
+            self.model = self.__simple_ann()
+            self.__train()
+            os.mkdir(complete_path)
+            self.model.save(current_filepath + model_folder)
+
     def __simple_ann(self):
         
         input_shape = (self.message_utils.X.shape[1],)
@@ -73,8 +88,36 @@ class TatuIA:
     def __load_data__(self):
         pass
     
-    def get_reply(self, user_message):
-        pass 
+    def __intent_prediction(self,user_message):
+        user_message_bag = self.message_utils.bag_for_message(user_message)
+    
+        response_prediction = self.model.predict(np.array([user_message_bag]))[0]
+        
+        print(response_prediction)
+
+        results = [[index, response] for index, response in enumerate(response_prediction) if response > self.PROB_SAFE_VALUE ]    
+        #print(results)
+        # verifica nas previsões se não há 1 na lista, se não há envia a resposta padrão (anything_else) 
+        # ou se não corresponde a margem de erro
+
+        if "1" not in str(user_message_bag) or len(results) == 0 :
+            results = [[0, response_prediction[0]]]
+
+        results.sort(key=lambda x: x[1], reverse=True)
+        print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
+        return [{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results]
+
+
+    def get_reply(self,user_message):
+        most_prob_intent = self.__intent_prediction(user_message)[0]['intent'] # a classe mais provável
+        list_of_intents = self.message_utils.corpus['intents'] # lista de intenções
+
+        for idx in list_of_intents:
+            if idx['tag'] == most_prob_intent:
+                result = random.choice(idx['responses'])
+                break
+
+        return result
 
 def main():
     database = {
@@ -105,9 +148,16 @@ def main():
 
     tatu_zap = TatuIA("", message_utils=message_utils)
   
-    tatu_zap.print_model()
+    #tatu_zap.print_model()
 
-    tatu_zap.eval_model()
+    #tatu_zap.eval_model()
+
+    while True:
+        try:
+            print("Manda uma mensagem para o TatuBot !")
+            tatu_zap.get_reply(input())
+        except EOFError:
+            break
 
 if __name__ == "__main__":
     main()

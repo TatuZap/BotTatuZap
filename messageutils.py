@@ -22,8 +22,8 @@ from nltk import word_tokenize , download , pos_tag
 from nltk.stem import WordNetLemmatizer
 
 # deixe a linha abixo sem comentários somente se precisar dessas bibliotecas de nlp
-#download(['punkt','averaged_perceptron_tagger','stopwords','wordnet','omw-1.4'])
-
+#download(['punkt','averaged_perceptron_tagger','stopwords','wordnet','omw-1.4'\])
+stopwords = nltk.corpus.stopwords.words('portuguese')
 warnings.filterwarnings('ignore')
 
 @dataclass
@@ -64,9 +64,6 @@ class MessageUtils:
     clean_punctuation = lambda self, message :  self.clean_by_sub(message, self.punctuacion_pattern, '')
     clean_multiple_backspaces = lambda self, message : self.clean_by_sub(message, self.multiple_backspace_pattern, ' ')
     
-
-
-
     def full_clean_text(self,message): 
         message = self.clean_emotes(message.lower())
         message = self.clean_urls(message)
@@ -75,8 +72,9 @@ class MessageUtils:
         message = unidecode.unidecode(message)
         return message
 
-    def get_tokens(self,clean_message, tokenizer = None, stopwords=None):
-        return nltk.word_tokenize(clean_message)
+    def get_tokens(self,message, tokenizer = None, stopwords=nltk.corpus.stopwords.words('portuguese')):
+        return [ word for word in nltk.word_tokenize(self.full_clean_text(message)) if word not in stopwords]
+
 
     def bag_of_words_corpus_rep(self):
         """
@@ -106,7 +104,8 @@ class MessageUtils:
 
     
 
-    def process_training_data(self, corpus, stopwords):
+    def process_training_data(self, corpus, stopwords=nltk.corpus.stopwords.words('portuguese')):
+        self.corpus = corpus
         self.vocabulary = []
         self.documents  = []
         intents    = corpus
@@ -115,7 +114,7 @@ class MessageUtils:
 
         for intent in intents['intents']:
             for pattern in intent['patterns']:
-                word = self.get_tokens(self.full_clean_text(pattern))
+                word = self.get_tokens(pattern)
                 self.vocabulary.extend(word)
                 self.documents.append((word, intent['tag']))
 
@@ -128,7 +127,7 @@ class MessageUtils:
 
 
     def bag_for_message(self, message):
-        sentence_words = self.get_tokens(self.full_clean_text(message))
+        sentence_words = self.get_tokens(message)
 
         bag = [0]*len(self.vocabulary)
         for setence in sentence_words:
@@ -164,9 +163,9 @@ def main():
         }
     # demo da funcionalide da classe utils para mensagem
     text_utils = MessageUtils()
-    print("Exemplo de pre-procesamento ",text_utils.full_clean_text("200 comentários com o emoji do #TimeDoBigode, bora? 👨🏻👨🏻👨🏻"))
+    print("Exemplo de pre-procesamento ",text_utils.get_tokens("200 comentários com o emoji do #TimeDoBigode, bora? 👨🏻👨🏻👨🏻"))
     text_utils.process_training_data(database,None)
-    print("Exemplo de BAg of word ",text_utils.bag_for_message("oi, como vai vocé, quais são as minhas matérias de hoje"))
-    print(text_utils.X.shape)
+    print("Exemplo de Bag of word ",text_utils.bag_for_message("oi, como vai você, quais são as minhas matérias de hoje"))
+    print(text_utils.vocabulary)
 if __name__ == "__main__":
     main()
