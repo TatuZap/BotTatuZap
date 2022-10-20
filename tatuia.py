@@ -74,19 +74,6 @@ class TatuIA:
         results = self.model.evaluate(self.message_utils.X, self.message_utils.Y, batch_size=1)
         print("test loss, test acc:", results)
     
-    def show_data(self):
-        """
-            cria um dataframe dos dados de treino e os retorna.
-        """
-        pass 
-    
-    def __valid_path__(self):
-        return os.path.exists(self.dfa_file)
-    
-    def __load_data__(self):
-        if self.__valid_path__(self):
-            return json.load(self.dfa_file)
-    
     def __intent_prediction(self,user_message):
         user_message_bag = self.message_utils.bag_for_message(user_message)
     
@@ -117,20 +104,6 @@ class TatuIA:
                 break
 
         return result 
-
-    def is_ra(message):
-        ra = re.findall('\d+', message)
-
-        if ra != []:
-            # testa se o user digitou mais de um numero
-            if len(ra) > 1:
-                return False
-            # descarta ra com tamanho diferente de 11 e 9
-            elif len(ra[0]) != 11 and len(ra[0]) != 9:
-                return False
-            return True
-        # retorna false caso nao encontre um ra
-        return False
 
 def main():
     database = {

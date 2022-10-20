@@ -5,6 +5,7 @@ from xml.dom.expatbuilder import InternalSubsetExtractor
 from matplotlib.pyplot import get
 import nltk
 import random
+import pandas as pd
 import numpy as np
 import warnings
 import re
@@ -136,7 +137,26 @@ class MessageUtils:
                     bag[i] = 1
         return(np.array(bag))
 
+    def show_data(self, documents):
+        return pd.DataFrame(documents, columns = ['Message_tokens', 'Intent'])
+    
+    def __valid_path__(self):
+        return os.path.exists(self.dfa_file)
+    
+    def __load_data__(self):
+        if self.__valid_path__(self):
+            return json.load(self.dfa_file)
+   
+    def is_ra(message):
+        ra = re.findall('\d+', message)
 
+        if ra != []:
+            if len(ra) > 1:
+                return False
+            elif len(ra[0]) != 11 and len(ra[0]) != 9:
+                return False
+            return ra[0]
+        return False
 
 def main():
     database = {
