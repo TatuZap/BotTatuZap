@@ -13,11 +13,6 @@ import unidecode
 from dataclasses import dataclass
 from typing import Callable
 
-import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Dropout
-from keras.optimizers import SGD
-
 import nltk
 from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
@@ -106,8 +101,8 @@ class MessageUtils:
         random.shuffle(bag_X_and_Y)
         bag_X_and_Y = np.array(bag_X_and_Y)
         # criamos lista de treino sendo x os patterns e y as intenções
-        self.X = np.array(list(bag_X_and_Y[:, 0]),dtype=object)
-        self.Y = np.array(list(bag_X_and_Y[:, 1]),dtype=object)
+        self.X = np.array(list(bag_X_and_Y[:, 0]))
+        self.Y = np.array(list(bag_X_and_Y[:, 1]))
 
     
 
@@ -172,6 +167,6 @@ def main():
     print("Exemplo de pre-procesamento ",text_utils.full_clean_text("200 comentários com o emoji do #TimeDoBigode, bora? 👨🏻👨🏻👨🏻"))
     text_utils.process_training_data(database,None)
     print("Exemplo de BAg of word ",text_utils.bag_for_message("oi, como vai vocé, quais são as minhas matérias de hoje"))
-
+    print(text_utils.X.shape)
 if __name__ == "__main__":
     main()

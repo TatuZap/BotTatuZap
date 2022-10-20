@@ -1,99 +1,113 @@
+from email import message
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
+# tensorflow tags
+#0 = all messages are logged (default behavior)
+#1 = INFO messages are not printed
+#2 = INFO and WARNING messages are not printed
+#3 = INFO, WARNING, and ERROR messages are not printed
+
 import json
 import pickle
-import nltk
+
 import random
 import numpy as np
 import warnings
-import re
-import string
-import unidecode 
+from messageutils import MessageUtils # nossa classe de pré-processamento
 
 import tensorflow as tf
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout
 from keras.optimizers import SGD
 
-import nltk
-from nltk.stem.wordnet import WordNetLemmatizer
-from nltk.sentiment import SentimentIntensityAnalyzer
-from nltk.tokenize import TweetTokenizer
-from nltk.corpus import stopwords
-from nltk import word_tokenize , download , pos_tag
-from nltk.stem import WordNetLemmatizer
-download(['punkt','averaged_perceptron_tagger','stopwords','wordnet','omw-1.4'])
-
-
 class TatuIA:
-    def __init__(self, intent_file_path, dfa_file_path ):
-        self.intent_file = intent_file_path
+    def __init__(self, dfa_file_path , message_utils ):
         self.dfa_file = dfa_file_path
+        self.message_utils = message_utils # classe de pré-processamento de textos
+        self.model = self.__simple_ann() # neuranet do bot
+        self.__train()
         
-    def __train__(self):
-        pass 
+        
+    def __simple_ann(self):
+        
+        input_shape = (self.message_utils.X.shape[1],)
+        output_shape = self.message_utils.Y.shape[1]
+        # the deep learning model
+        model = Sequential()
+        model.add(Dense(128, input_shape=input_shape, activation="relu"))
+        model.add(Dropout(0.5))
+        model.add(Dense(64, activation="relu"))
+        model.add(Dropout(0.3))
+        model.add(Dense(output_shape, activation = "softmax"))
+        optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, decay=1e-6)
+        
+        model.compile(loss='categorical_crossentropy',
+                      optimizer=optimizer,
+                      metrics=[tf.keras.metrics.Precision()])
+
+        return model
+    
+    def __train(self):
+        self.model.fit(self.message_utils.X, self.message_utils.Y, epochs=200, verbose=0)
     
     def get_model(self):
-        pass
+        return self.model
+    
+    def print_model(self):
+        print(self.get_model().summary())
     
     def eval_model(self):
-        pass
-    
-    def __process_text__(self,message=None):
-        """
-            Função de concentra todo o Pré-processamento do Texto
-        """
-        def clean_emotes(message):
-          emoj = re.compile("["
-                u"\U0001F600-\U0001F64F"  
-                u"\U0001F300-\U0001F5FF"  
-                u"\U0001F680-\U0001F6FF"  
-                u"\U0001F1E0-\U0001F1FF"  
-                u"\U00002500-\U00002BEF"  
-                u"\U00002702-\U000027B0"
-                u"\U00002702-\U000027B0"
-                u"\U000024C2-\U0001F251"
-                u"\U0001f926-\U0001f937"
-                u"\U00010000-\U0010ffff"
-                u"\u2640-\u2642" 
-                u"\u2600-\u2B55"
-                u"\u200d"
-                u"\u23cf"
-                u"\u23e9"
-                u"\u231a"
-                u"\ufe0f"  
-                u"\u3030"
-                "]+",
-                              re.UNICODE)
-          return re.sub(emoj, '', message)
-
-        def clean_urls(message): 
-          return re.sub('http\S+|www\S+|https\S+', '', message)
-
-        def clean_punctuation(message) : 
-          return re.sub(r'[^\w\s]','',message)
-
-        def clean_text(message): 
-          message = message.lower()
-          message = unidecode.unidecode(message) # remove accentuation
-          message = clean_emotes(message)  
-          message = clean_punctuation(message)
-          message = clean_urls(message)
-          message = re.sub(r'\s+',' ',message)
-          return message
-
-
-        def get_tokens(message, tokenizer = None,stopwords=None):
-            return nltk.word_tokenize(message)
-
+        print("Evaluate on train data")
+        results = self.model.evaluate(self.message_utils.X, self.message_utils.Y, batch_size=1)
+        print("test loss, test acc:", results)
     
     def show_data(self):
+        """
+            cria um dataframe dos dados de treino e os retorna.
+        """
         pass 
     
     def __valid_path__(self):
         pass 
     
     def __load_data__(self):
-        self.dfa =  
+        pass
     
-    def get_reply(self, message):
+    def get_reply(self, user_message):
         pass 
+
+def main():
+    database = {
+        "intents": [
+                {
+                    "tag": "welcome",
+                    "patterns": ["Oi","Oi, bom dia","Oi, boa tarde", "bom dia", "boa tarde", "boa noite", "oi, boa noite", "olá, boa noite", "oiiiii", "Olá","oiii, como vai?","opa, tudo bem?"],
+                    "responses": ["Olá, serei seu assistente virtual, em que posso te ajudar?","Salve, qual foi ?", "Manda pro pai, Lança a braba", "No que posso te ajudar ?"],
+                    "context": [""]
+                },
+                {
+                    "tag": "my_classes",
+                    "patterns": ["Quais são as minhas matérias ?","Quais são as minhas matérias de hoje ? ","Quais são as minhas disciplinas de hoje ? ", "Que aulas eu tenho Hoje","me fale minhas turmas", "que sala eu devo ir?", "Qual minha Sala ?","quais as minhas turmas ?"],
+                    "responses": ["Entendi, você deseja saber suas salas","Você deseja saber suas salas ?", "Ah, você quer saber qual sala ? ", "Suas Aulas ?"],
+                    "context": [""]
+                },
+                {
+                    "tag": "anything_else",
+                    "patterns": [],
+                    "responses": ["Desculpa, não entendi o que você falou, tente novamente!","Não compreendi a sua solicitação, talvez eu possa te ajudar"],
+                    "context": [""]
+                }
+            ]
+        }
+    # demo da funcionalide da classe utils para mensagem
+    message_utils = MessageUtils()
+    message_utils.process_training_data(database,None)
+
+    tatu_zap = TatuIA("", message_utils=message_utils)
+  
+    tatu_zap.print_model()
+
+    tatu_zap.eval_model()
+
+if __name__ == "__main__":
+    main()
