@@ -20,6 +20,8 @@ from keras.models import Sequential
 from keras.layers import Dense, Activation, Dropout
 from keras.optimizers import SGD
 
+import re
+
 class TatuIA:
     def __init__(self, dfa_file_path , message_utils ):
         self.dfa_file = dfa_file_path
@@ -75,7 +77,21 @@ class TatuIA:
             return json.load(self.dfa_file)
     
     def get_reply(self, user_message):
-        pass 
+        pass
+
+    def is_ra(message):
+        ra = re.findall('\d+', message)
+
+        if ra != []:
+            # testa se o user digitou mais de um numero
+            if len(ra) > 1:
+                return False
+            # descarta ra com tamanho diferente de 11 e 9
+            elif len(ra[0]) != 11 and len(ra[0]) != 9:
+                return False
+            return True
+        # retorna false caso nao encontre um ra
+        return False
 
 def main():
     database = {
