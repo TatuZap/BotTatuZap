@@ -23,7 +23,7 @@ from nltk import word_tokenize , download , pos_tag
 from nltk.stem import WordNetLemmatizer
 
 # deixe a linha abixo sem comentários somente se precisar dessas bibliotecas de nlp
-#download(['punkt','averaged_perceptron_tagger','stopwords','wordnet','omw-1.4'\])
+download(['punkt','averaged_perceptron_tagger','stopwords','wordnet','omw-1.4'])
 stopwords = nltk.corpus.stopwords.words('portuguese')
 warnings.filterwarnings('ignore')
 

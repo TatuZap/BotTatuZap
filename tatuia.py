@@ -57,7 +57,6 @@ class TatuIA:
         model.compile(loss='categorical_crossentropy',
                       optimizer=optimizer,
                       metrics=[tf.keras.metrics.Precision()])
-
         return model
     
     def __train(self):
@@ -103,7 +102,10 @@ class TatuIA:
                 result = random.choice(idx['responses'])
                 break
 
-        return result 
+        return result
+
+    def model_predict(self,X):
+        return self.model.predict(X) 
 
 def main():
     database = {
