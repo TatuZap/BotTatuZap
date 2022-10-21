@@ -9,18 +9,17 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import multilabel_confusion_matrix
 def confusion_matrix(p,y_test):
     #p = model.model_predict(X_test)
-    p = np.rint(p)
-    p = p.astype(int)
+    #p = np.rint(p)
+    #p = p.astype(int)
 
-    pred_translated = np.argmax(p, axis=1)
-    y_translated = np.argmax(y_test, axis=1)
+    #pred_translated = np.argmax(p, axis=1)
+    #y_translated = np.argmax(y_test, axis=1)
 
-    cm = multilabel_confusion_matrix(y_translated, pred_translated)
-    df_cm = pd.DataFrame(cm[0], index = ['welcome', 'my_classes'],
-                      columns = ['welcome', 'my_classes'])
-    plt.figure(figsize = (10,7))
-    sn.heatmap(df_cm, annot=True)
-    print(cm)
+    cm = multilabel_confusion_matrix(p, y_test)
+    #df_cm = pd.DataFrame(cm[0], index = ['welcome', 'my_classes'],columns = ['welcome', 'my_classes'])
+    #plt.figure(figsize = (10,7))
+    #sn.heatmap(df_cm, annot=True)
+    print(cm[0])
 
 
 
@@ -81,23 +80,25 @@ def main():
 
     tatu_zap = tatu.TatuIA("", message_utils=message_utils)
   
-    #tatu_zap.print_model()
+    tatu_zap.print_model()
 
-    #tatu_zap.eval_model()
+    tatu_zap.eval_model()
     #print ("Salve")
-    X = message_test.X
-    Y = message_test.Y
+    X = ["minhas matéria","QuaL matérias ? ","minha disciplina ", "Que aula tenho ","me fale turma", "que sala ", "Qual minha Sala","qual a turma ?","Oi","Ola","Opa","dia"]
+    Y = ["my_classes","my_classes","my_classes", "my_classes","my_classes", "my_classes", "my_classes","my_classes","welcome","welcome","welcome","welcome"]
     
-    pred = tatu_zap.model_predict(X)
-    confusion_matrix(pred,Y)
+
+
+    #print(tatu_zap.get_reply("Quais são as minhas matérias ?"))
+
+    list = []
+    for i in X:
+        list.append(tatu_zap.model_predict(i))
+
+
+    #print(list)
+    confusion_matrix(list,Y)
     
-    # while True:
-    #
-    #     try:
-    #         print("Manda uma mensagem para o TatuBot !")
-    #         tatu_zap.get_reply(input())
-    #     except EOFError:
-    #         break
 
 if __name__ == "__main__":
     main()

@@ -104,8 +104,8 @@ class TatuIA:
 
         return result
 
-    def model_predict(self,X):
-        return self.model.predict(X) 
+    def model_predict(self,user_message):
+        return self.__intent_prediction(user_message)[0]['intent'] # a classe mais provável
 
 def main():
     database = {
