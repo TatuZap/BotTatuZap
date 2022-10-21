@@ -2,12 +2,12 @@ import tatuia as tatu
 from messageutils import MessageUtils # nossa classe de pré-processamento
 
 
-import seaborn as sn
+#import seaborn as sn
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import multilabel_confusion_matrix
-def confusion_matrix(p,y_test):
+from sklearn.metrics import confusion_matrix
+#def c_m(p,y_test):
     #p = model.model_predict(X_test)
     #p = np.rint(p)
     #p = p.astype(int)
@@ -15,13 +15,13 @@ def confusion_matrix(p,y_test):
     #pred_translated = np.argmax(p, axis=1)
     #y_translated = np.argmax(y_test, axis=1)
 
-    cm = multilabel_confusion_matrix(p, y_test)
-    df_cm = pd.DataFrame(cm, index = ['welcome', 'my_classes','anything_else'],columns = ['welcome', 'my_classes','anything_else'])
-    print(df_cm)
+    #cm = confusion_matrix(p, y_test)
+    #df_cm = pd.DataFrame(cm, index = ['welcome', 'my_classes','anything_else'],columns = ['welcome', 'my_classes','anything_else'])
+    #print(df_cm)
     #plt.figure(figsize = (10,7))
     #figure = sn.heatmap(df_cm, annot=True)
     #figure.savefig('teste_string.png', dpi=400)
-    print(cm)
+    #print(cm)
 
 
 
@@ -93,14 +93,21 @@ def main():
 
     #print(tatu_zap.get_reply("Quais são as minhas matérias ?"))
 
-    list = []
-    for i in X:
-        list.append(tatu_zap.model_predict(i))
+    list = [(tatu_zap.model_predict(i)) for i in X]
+        
 
 
-    print(list)
-    confusion_matrix(list,Y)
-    
+    #print(list)
+    #print((list))
+    #print((Y))    
+    #cm = confusion_matrix(Y, list, labels=['my_classes','welcome','anything_else'])
+    #print(cm)
+
+    cm = pd.DataFrame(
+    confusion_matrix(Y, list, labels=['my_classes','welcome','anything_else']), 
+    index=['my_classes','welcome','anything_else'], 
+    columns=['my_classes','welcome','anything_else'])
+    print(cm)
 
 if __name__ == "__main__":
     main()
