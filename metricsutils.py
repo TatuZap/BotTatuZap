@@ -16,10 +16,12 @@ def confusion_matrix(p,y_test):
     #y_translated = np.argmax(y_test, axis=1)
 
     cm = multilabel_confusion_matrix(p, y_test)
-    #df_cm = pd.DataFrame(cm[0], index = ['welcome', 'my_classes'],columns = ['welcome', 'my_classes'])
+    df_cm = pd.DataFrame(cm, index = ['welcome', 'my_classes','anything_else'],columns = ['welcome', 'my_classes','anything_else'])
+    print(df_cm)
     #plt.figure(figsize = (10,7))
-    #sn.heatmap(df_cm, annot=True)
-    print(cm[0])
+    #figure = sn.heatmap(df_cm, annot=True)
+    #figure.savefig('teste_string.png', dpi=400)
+    print(cm)
 
 
 
@@ -84,8 +86,8 @@ def main():
 
     tatu_zap.eval_model()
     #print ("Salve")
-    X = ["minhas matéria","QuaL matérias ? ","minha disciplina ", "Que aula tenho ","me fale turma", "que sala ", "Qual minha Sala","qual a turma ?","Oi","Ola","Opa","dia"]
-    Y = ["my_classes","my_classes","my_classes", "my_classes","my_classes", "my_classes", "my_classes","my_classes","welcome","welcome","welcome","welcome"]
+    X = ["minhas matéria","QuaL matérias ? ","minha disciplina ", "Que aula tenho ","me fale turma", "que sala ", "Qual minha Sala","qual a turma ?","Oi","Ola","Opa","dia","asdasdasdas"]
+    Y = ["my_classes","my_classes","my_classes", "my_classes","my_classes", "my_classes", "my_classes","my_classes","welcome","welcome","welcome","welcome","anything_else"]
     
 
 
@@ -96,7 +98,7 @@ def main():
         list.append(tatu_zap.model_predict(i))
 
 
-    #print(list)
+    print(list)
     confusion_matrix(list,Y)
     
 

@@ -21,6 +21,7 @@ from nltk.tokenize import TweetTokenizer
 from nltk.corpus import stopwords
 from nltk import word_tokenize , download , pos_tag
 from nltk.stem import WordNetLemmatizer
+from enelvo.normaliser import Normaliser
 
 # deixe a linha abixo sem comentários somente se precisar dessas bibliotecas de nlp
 download(['punkt','averaged_perceptron_tagger','stopwords','wordnet','omw-1.4'])
@@ -57,7 +58,8 @@ class MessageUtils:
             u"\u3030"
             "]+",re.UNICODE)
     
-    
+    normalizer =  Normaliser(tokenizer='readable')
+
     clean_by_sub  = lambda self, message, pattern, sub_string : re.sub(pattern,sub_string,message)
     
     clean_emotes = lambda self, message, : self.clean_by_sub(message, self.emote_pattern, '')
@@ -65,9 +67,12 @@ class MessageUtils:
     clean_punctuation = lambda self, message :  self.clean_by_sub(message, self.punctuacion_pattern, '')
     clean_multiple_backspaces = lambda self, message : self.clean_by_sub(message, self.multiple_backspace_pattern, ' ')
     
+    normalize_text = lambda self, message : self.normalizer.normalise(message)
+
     def full_clean_text(self,message): 
-        message = self.clean_emotes(message.lower())
-        message = self.clean_urls(message)
+        #message = self.clean_emotes(message.lower())
+        message = self.normalize_text(message)
+        #message = self.clean_urls(message)
         message = self.clean_punctuation(message)
         message = self.clean_multiple_backspaces(message)
         message = unidecode.unidecode(message)
