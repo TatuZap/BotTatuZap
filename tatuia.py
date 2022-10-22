@@ -35,12 +35,16 @@ class TatuIA:
         model_folder = "model_bot"
         complete_path = os.path.join(current_filepath, model_folder)
         if os.path.exists(complete_path):
+            print("Carregando o TatuBot do Disco")
             self.model = tf.keras.models.load_model(complete_path + "/model")
+            print("Fim do Carregando o TatuBot do Disco")
         else:
+            print("Build do TatuBot")
             self.model = self.__simple_ann()
             self.__train()
             os.mkdir(complete_path)
             self.model.save(complete_path + "/model")
+            print("Fim do Build, TatuBot dumped")
 
     def __simple_ann(self):
         input_shape = (self.message_utils.X.shape[1],)
@@ -57,7 +61,6 @@ class TatuIA:
         model.compile(loss='categorical_crossentropy',
                       optimizer=optimizer,
                       metrics=[tf.keras.metrics.Precision()])
-
         return model
     
     def __train(self):
@@ -75,8 +78,9 @@ class TatuIA:
         print("test loss, test acc:", results)
     
     def __intent_prediction(self,user_message):
+        print("Clean and normalized user message: {}".format(self.message_utils.full_clean_text(user_message)))
         user_message_bag = self.message_utils.bag_for_message(user_message)
-    
+
         response_prediction = self.model.predict(np.array([user_message_bag]))[0]
         
         print(response_prediction)
@@ -103,7 +107,10 @@ class TatuIA:
                 result = random.choice(idx['responses'])
                 break
 
-        return result 
+        return result
+
+    def model_predict(self,user_message):
+        return self.__intent_prediction(user_message)[0]['intent'] # a classe mais provável
 
 def main():
     database = {
@@ -116,7 +123,7 @@ def main():
                 },
                 {
                     "tag": "my_classes",
-                    "patterns": ["Quais são as minhas matérias ?","Quais são as minhas matérias de hoje ? ","Quais são as minhas disciplinas de hoje ? ", "Que aulas eu tenho Hoje","me fale minhas turmas", "que sala eu devo ir?", "Qual minha Sala ?","quais as minhas turmas ?"],
+                    "patterns": ["oi, Quais são as minhas matérias ?","Quais são as minhas matérias ?","olá Quais são as minhas matérias de hoje ? ","Bom dia, Quais são as minhas disciplinas de hoje ? ", "Que aulas eu tenho Hoje","oi, ola, bom dia me fale minhas turmas", "que sala eu devo ir?", "Qual minha Sala ?","quais as minhas turmas ?"],
                     "responses": ["Entendi, você deseja saber suas salas","Você deseja saber suas salas ?", "Ah, você quer saber qual sala ? ", "Suas Aulas ?"],
                     "context": [""]
                 },
@@ -140,9 +147,9 @@ def main():
 
     while True:
         try:
-            print("Manda uma mensagem para o TatuBot !")
+            print("Envie uma mensagem para o TatuBot!")
             tatu_zap.get_reply(input())
-        except EOFError:
+        except KeyboardInterrupt:
             break
 
 if __name__ == "__main__":
