@@ -1,54 +1,60 @@
-import os
-from pyexpat import model
-from unittest import result
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2' 
-# tensorflow tags
-#0 = all messages are logged (default behavior)
-#1 = INFO messages are not printed
-#2 = INFO and WARNING messages are not printed
-#3 = INFO, WARNING, and ERROR messages are not printed
-
-import json
-import pickle
-
-import random
-import numpy as np
-import warnings
-from messageutils import MessageUtils # nossa classe de pré-processamento
-
-import tensorflow as tf
-from keras.models import Sequential
-from keras.layers import Dense, Activation, Dropout, SpatialDropout1D, LSTM, Embedding
-from keras.optimizers import SGD
+from email import message
+from tensorflow.keras.utils import pad_sequences
 from keras.preprocessing.text import Tokenizer
+from keras.optimizers import SGD
+from keras.layers import Dense, Activation, Dropout, SpatialDropout1D, LSTM, Embedding
+from keras.models import Sequential
+import tensorflow as tf
+from messageutils import MessageUtils  # nossa classe de pré-processamento
+import warnings
+import numpy as np
+import pandas as pd
+import random
+import pickle
+import json
+import os
+from unittest import result
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# tensorflow tags
+# 0 = all messages are logged (default behavior)
+# 1 = INFO messages are not printed
+# 2 = INFO and WARNING messages are not printed
+# 3 = INFO, WARNING, and ERROR messages are not printed
+
+
 # from keras.preprocessing.sequence import pad_sequences
 
+
 class TatuIA:
-    def __init__(self, dfa_file_path , message_utils: MessageUtils ):
+    def __init__(self, dfa_file_path, message_utils: MessageUtils, lstm = True):
         self.dfa_file = dfa_file_path
-        self.message_utils = message_utils # classe de pré-processamento de textos
-        self.model = self.__simple_ann() # neuranet do bot
-        self.__load_model()
+        self.message_utils = message_utils  # classe de pré-processamento de textos
+        self.model = self.__simple_ann() if not lstm else self.__simple_lstm() # neuranet do bot
+        self.__train()
         self.PROB_SAFE_VALUE = 0.25
-    
 
     def __load_model(self):
-        current_filepath = os.getcwd()
-        model_folder = "modelbot"
-        complete_path = os.path.join(current_filepath, model_folder)
-        if os.path.exists(complete_path):
-            print(">>> Carregando o TatuBot do Disco")
-            self.model = tf.keras.models.load_model(complete_path + "/model")
-            print(">>> Fim do Carregando o TatuBot do Disco")
-        else:
-            print(">>> Build do TatuBot")
-            self.model = self.__simple_ann()
+        # current_filepath = os.getcwd()
+        # model_folder = "modelbot"
+        # complete_path = os.path.join(current_filepath, model_folder)
+        # if os.path.exists(complete_path):
+        #     print(">>> Carregando o TatuBot do Disco")
+        #     self.model = tf.keras.models.load_model(complete_path + "/model")
+        #     print(">>> Fim do Carregando o TatuBot do Disco")
+        # else:
+        print(">>> Build do TatuBot")
+        if self.model:
             self.__train()
-            os.mkdir(complete_path)
-            self.model.save(complete_path + "/model")
-            print(">>> Fim do Build, TatuBot dumped")
+        self.model = self.__simple_ann()
+        self.__train()
+        #os.mkdir(complete_path)
+        #self.model.save(complete_path + "/model")
+        print(">>> Fim do Build, TatuBot dumped")
 
     def __simple_ann(self):
+        self.X = self.message_utils.X
+        self.Y = self.message_utils.Y
+
         input_shape = (self.message_utils.X.shape[1],)
         output_shape = self.message_utils.Y.shape[1]
         # the deep learning model
@@ -57,73 +63,80 @@ class TatuIA:
         model.add(Dropout(0.5))
         model.add(Dense(64, activation="relu"))
         model.add(Dropout(0.3))
-        model.add(Dense(output_shape, activation = "softmax"))
+        model.add(Dense(output_shape, activation="softmax"))
         optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, decay=1e-6)
-        
+
         model.compile(loss='categorical_crossentropy',
                       optimizer=optimizer,
                       metrics=[tf.keras.metrics.Precision()])
         return model
-    
-    # def __simple_lstm(self):
-    #     X = list(map( lambda x : x[0], self.message_utils.documents))
-    #     #print(list(X))
-    #     self.X_train = X#tf.keras.utils.pad_sequences(X, maxlen=len(self.message_utils.vocabulary))
-    #     model = Sequential()
-    #     model.add(Embedding(len(self.message_utils.vocabulary), embedding_vector_features=45, input_length=self.X_train.shape[1]))
-    #     model.add(SpatialDropout1D(0.2))
-    #     model.add(LSTM(100, dropout=0.2, recurrent_dropout=0.2))
-    #     model.add(Dense(self.message_utils.Y.shape[1], activation='softmax'))
-        
-    #     model.compile(loss='categorical_crossentropy', 
-    #                   optimizer='adam',
-    #                   metrics=['accuracy'])
 
-    #     return model
-    #     epochs = 5
-    #     batch_size = 64
+    def __simple_lstm(self):
+        """
+            pré-processamento especial para a LSTM FIXME: realocar esse código.
+        """
+        df = pd.DataFrame(self.message_utils.documents,columns = ["token-frase","classe"])
+        df["texto-lstm"] = df["token-frase"].apply( lambda message : " ".join(message))
+        df = df.drop("token-frase",axis="columns")
+        MAX_LEN   = len(self.message_utils.vocabulary)
+        tokenizer = Tokenizer(MAX_LEN,lower=True)
+        tokenizer.fit_on_texts(df['texto-lstm'].values)
+        X = tokenizer.texts_to_sequences(df['texto-lstm'].values)
+        self.X = pad_sequences(X, maxlen=MAX_LEN)
+        self.Y = pd.get_dummies(df['classe']).values
 
-    #     history = model.fit(X_train, Y_train, epochs=epochs, batch_size=batch_size)
+        model = Sequential()
+        model.add(Embedding(MAX_LEN, 100, input_length=self.X.shape[1]))
+        model.add(SpatialDropout1D(0.2))
+        model.add(LSTM(100, dropout=0.2, recurrent_dropout=0.2))
+        model.add(Dense(self.Y.shape[1], activation='softmax'))
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
+        return model
 
     def __train(self):
-        self.model.fit(self.message_utils.X, self.message_utils.Y, epochs=200, verbose=1)
-    
+        self.model.fit(self.X,
+                       self.Y, epochs=200, verbose=0)
     def get_model(self):
         return self.model
-    
+
     def print_model(self):
         print(self.get_model().summary())
-    
+
     def eval_model(self):
         print("Evaluate on train data")
-        results = self.model.evaluate(self.message_utils.X, self.message_utils.Y, batch_size=1)
+        results = self.model.evaluate(
+            self.X, self.Y, batch_size=1)
         print("test loss, test acc:", results)
-    
-    def __intent_prediction(self,user_message):
-        print(">>> Normalized and Clean user_message: {}.".format(self.message_utils.full_clean_text(user_message)))
+
+    def __intent_prediction(self, user_message):
+        print(">>> Normalized and Clean user_message: {}.".format(
+            self.message_utils.full_clean_text(user_message)))
         user_message_bag = self.message_utils.bag_for_message(user_message)
 
-        response_prediction = self.model.predict(np.array([user_message_bag]),verbose=0)[0]
-        
-        #print(response_prediction)
+        response_prediction = self.model.predict(
+            np.array([user_message_bag]), verbose=0)[0]
 
-        results = [[index, response] for index, response in enumerate(response_prediction) if response > self.PROB_SAFE_VALUE ]    
-        #print(results)
-        # verifica nas previsões se não há 1 na lista, se não há envia a resposta padrão (anything_else) 
+        # print(response_prediction)
+
+        results = [[index, response] for index, response in enumerate(
+            response_prediction) if response > self.PROB_SAFE_VALUE]
+        # print(results)
+        # verifica nas previsões se não há 1 na lista, se não há envia a resposta padrão (anything_else)
         # ou se não corresponde a margem de erro
 
-        if "1" not in str(user_message_bag) or len(results) == 0 :
+        if "1" not in str(user_message_bag) or len(results) == 0:
             results = [[0, response_prediction[0]]]
 
         results.sort(key=lambda x: x[1], reverse=True)
-        #print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
+        # print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
         return [{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results]
 
-
-    def get_reply(self,user_message):
-        most_prob_intent = self.__intent_prediction(user_message)[0]['intent'] # a classe mais provável
-        list_of_intents = self.message_utils.corpus['intents'] # lista de intenções
+    def get_reply(self, user_message):
+        most_prob_intent = self.__intent_prediction(
+            user_message)[0]['intent']  # a classe mais provável
+        # lista de intenções
+        list_of_intents = self.message_utils.corpus['intents']
 
         for idx in list_of_intents:
             if idx['tag'] == most_prob_intent:
@@ -132,8 +145,11 @@ class TatuIA:
 
         return result, most_prob_intent
 
-    def get_predict(self,user_message):
-        return self.__intent_prediction(user_message)[0]['intents'] # a classe mais provável
+    def get_predict(self, user_message):
+        # a classe mais provável
+        return self.__intent_prediction(user_message)[0]['intents']
+
+
 
 def main():
     database = {
@@ -162,11 +178,12 @@ def main():
     message_utils = MessageUtils()
     message_utils.process_training_data(database,None)
 
-    tatu_zap = TatuIA("", message_utils=message_utils)
+    tatu_zap = TatuIA("", message_utils=message_utils,lstm=False)
   
     #tatu_zap.print_model()
 
     #tatu_zap.eval_model()
+    
     print(">>> Demo da funcionalidade de reconhecimento de intenção do TatuBot.")
     print(">>> Inicialmente a I.A foi treinada com somente duas inteções (welcome,my_classes).")
 
@@ -193,5 +210,8 @@ def main():
         except KeyboardInterrupt:
             break
 
+
+
 if __name__ == "__main__":
     main()
+
