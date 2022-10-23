@@ -18,8 +18,10 @@ from messageutils import MessageUtils # nossa classe de pré-processamento
 
 import tensorflow as tf
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Dropout
+from keras.layers import Dense, Activation, Dropout, SpatialDropout1D, LSTM, Embedding
 from keras.optimizers import SGD
+from keras.preprocessing.text import Tokenizer
+# from keras.preprocessing.sequence import pad_sequences
 
 class TatuIA:
     def __init__(self, dfa_file_path , message_utils: MessageUtils ):
@@ -32,19 +34,19 @@ class TatuIA:
 
     def __load_model(self):
         current_filepath = os.getcwd()
-        model_folder = "model_bot"
+        model_folder = "modelbot"
         complete_path = os.path.join(current_filepath, model_folder)
         if os.path.exists(complete_path):
-            print("Carregando o TatuBot do Disco")
+            print(">>> Carregando o TatuBot do Disco")
             self.model = tf.keras.models.load_model(complete_path + "/model")
-            print("Fim do Carregando o TatuBot do Disco")
+            print(">>> Fim do Carregando o TatuBot do Disco")
         else:
-            print("Build do TatuBot")
+            print(">>> Build do TatuBot")
             self.model = self.__simple_ann()
             self.__train()
             os.mkdir(complete_path)
             self.model.save(complete_path + "/model")
-            print("Fim do Build, TatuBot dumped")
+            print(">>> Fim do Build, TatuBot dumped")
 
     def __simple_ann(self):
         input_shape = (self.message_utils.X.shape[1],)
@@ -63,8 +65,29 @@ class TatuIA:
                       metrics=[tf.keras.metrics.Precision()])
         return model
     
+    # def __simple_lstm(self):
+    #     X = list(map( lambda x : x[0], self.message_utils.documents))
+    #     #print(list(X))
+    #     self.X_train = X#tf.keras.utils.pad_sequences(X, maxlen=len(self.message_utils.vocabulary))
+    #     model = Sequential()
+    #     model.add(Embedding(len(self.message_utils.vocabulary), embedding_vector_features=45, input_length=self.X_train.shape[1]))
+    #     model.add(SpatialDropout1D(0.2))
+    #     model.add(LSTM(100, dropout=0.2, recurrent_dropout=0.2))
+    #     model.add(Dense(self.message_utils.Y.shape[1], activation='softmax'))
+        
+    #     model.compile(loss='categorical_crossentropy', 
+    #                   optimizer='adam',
+    #                   metrics=['accuracy'])
+
+    #     return model
+    #     epochs = 5
+    #     batch_size = 64
+
+    #     history = model.fit(X_train, Y_train, epochs=epochs, batch_size=batch_size)
+
+
     def __train(self):
-        self.model.fit(self.message_utils.X, self.message_utils.Y, epochs=200, verbose=0)
+        self.model.fit(self.message_utils.X, self.message_utils.Y, epochs=200, verbose=1)
     
     def get_model(self):
         return self.model
@@ -78,12 +101,12 @@ class TatuIA:
         print("test loss, test acc:", results)
     
     def __intent_prediction(self,user_message):
-        print("Clean and normalized user message: {}".format(self.message_utils.full_clean_text(user_message)))
+        print(">>> Normalized and Clean user_message: {}.".format(self.message_utils.full_clean_text(user_message)))
         user_message_bag = self.message_utils.bag_for_message(user_message)
 
-        response_prediction = self.model.predict(np.array([user_message_bag]))[0]
+        response_prediction = self.model.predict(np.array([user_message_bag]),verbose=0)[0]
         
-        print(response_prediction)
+        #print(response_prediction)
 
         results = [[index, response] for index, response in enumerate(response_prediction) if response > self.PROB_SAFE_VALUE ]    
         #print(results)
@@ -94,7 +117,7 @@ class TatuIA:
             results = [[0, response_prediction[0]]]
 
         results.sort(key=lambda x: x[1], reverse=True)
-        print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
+        #print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
         return [{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results]
 
 
@@ -107,10 +130,10 @@ class TatuIA:
                 result = random.choice(idx['responses'])
                 break
 
-        return result
+        return result, most_prob_intent
 
     def get_predict(self,user_message):
-        return self.__intent_prediction(user_message)[0]['intent'] # a classe mais provável
+        return self.__intent_prediction(user_message)[0]['intents'] # a classe mais provável
 
 def main():
     database = {
@@ -144,11 +167,29 @@ def main():
     #tatu_zap.print_model()
 
     #tatu_zap.eval_model()
+    print(">>> Demo da funcionalidade de reconhecimento de intenção do TatuBot.")
+    print(">>> Inicialmente a I.A foi treinada com somente duas inteções (welcome,my_classes).")
 
     while True:
         try:
-            print("Envie uma mensagem para o TatuBot!")
-            tatu_zap.get_reply(input())
+            #print(">>> Envie uma mensagem para o TatuBot!")
+            user_message = input("user: ")
+            response, intent = tatu_zap.get_reply(user_message)
+            if intent == "my_classes":
+                user_ra = tatu_zap.message_utils.is_ra(user_message)
+                if user_ra:
+                    print("Tatu: Já estou processando as turmas para o ra {}.".format(user_ra))
+                else:
+                    while True:
+                        print("Tatu: Você solicitou informações sobre suas turmas, agora insira seu ra!.")
+                        expected_ra = input()
+                        user_ra = tatu_zap.message_utils.is_ra(expected_ra)
+                        if user_ra:
+                            print("Tatu: Já estou processando as turmas para o ra {}.".format(user_ra))
+                            break
+            else:
+                print("Tatu: {}.".format(response)) 
+
         except KeyboardInterrupt:
             break
 

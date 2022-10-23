@@ -47,3 +47,6 @@ O arquivo principal que possui toda a funcionalidade da I.A do TatuBot é o ***t
 ```sh
 python3.8 tatuia.py
 ```
+
+## Exemplo de uso
+![caso de uso simplificado](tatuzap-use-case.png)

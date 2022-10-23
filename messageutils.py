@@ -139,27 +139,21 @@ class MessageUtils:
                     bag[i] = 1
         return(np.array(bag))
 
-    def show_data(self, documents):
-        return pd.DataFrame(documents, columns = ['Message_tokens', 'Intent'])
+    def show_data(self):
+        return pd.DataFrame(self.documents, columns = ['Message_tokens', 'Intent'])
     
     def __valid_path__(self):
         return os.path.exists(self.dfa_file)
     
-    def __load_data__(self):
+    def load_data(self):
         if self.__valid_path__(self):
             return json.load(self.dfa_file)
    
-    def is_ra(message):
-        ra = re.findall('\d+', message)
-
-        if ra != []:
-            if len(ra) > 1:
-                return False
-            elif len(ra[0]) != 11 and len(ra[0]) != 9:
-                return False
-            return ra[0]
-        return False
-
+    def is_ra(self,message):
+        possible_ra = re.findall('\d+', message)
+        lenght_constraint = lambda x : len(x) == 8 or len(x) == 11
+        valid_ra = list(filter(lenght_constraint,possible_ra))
+        return None if valid_ra == [] else valid_ra[0]
 def main():
     database = {
         "intents": [
@@ -189,5 +183,7 @@ def main():
     text_utils.process_training_data(database,None)
     print("Exemplo de Bag of word ",text_utils.bag_for_message("oi, como vai você, quais são as minhas matérias de hoje"))
     print(text_utils.vocabulary)
+    #print( text_utils.show_data() )
+    print( [ text_utils.is_ra(ra) for ra in ["11201722051 mais um ra 11111209","11201721679","11111209","12345"]] )
 if __name__ == "__main__":
     main()
