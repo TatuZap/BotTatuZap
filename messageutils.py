@@ -19,14 +19,11 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.sentiment import SentimentIntensityAnalyzer
 from nltk.tokenize import TweetTokenizer
 from nltk.corpus import stopwords
-from nltk import word_tokenize , download , pos_tag
+from nltk import word_tokenize, pos_tag
 from nltk.stem import WordNetLemmatizer
 from enelvo.normaliser import Normaliser
 
 # deixe a linha abixo sem comentários somente se precisar dessas bibliotecas de nlp
-download(['punkt','averaged_perceptron_tagger','stopwords','wordnet','omw-1.4'])
-stopwords = nltk.corpus.stopwords.words('portuguese')
-warnings.filterwarnings('ignore')
 
 @dataclass
 class MessageUtils:    
