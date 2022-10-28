@@ -147,7 +147,7 @@ class TatuIA:
 
     def get_predict(self, user_message):
         # a classe mais provável
-        return self.__intent_prediction(user_message)[0]['intents']
+        return self.__intent_prediction(user_message)[0]['intent']
 
 
 
@@ -162,8 +162,14 @@ def main():
                 },
                 {
                     "tag": "my_classes",
-                    "patterns": ["oi, Quais são as minhas matérias ?","Quais são as minhas matérias ?","olá Quais são as minhas matérias de hoje ? ","Bom dia, Quais são as minhas disciplinas de hoje ? ", "Que aulas eu tenho Hoje","oi, ola, bom dia me fale minhas turmas", "que sala eu devo ir?", "Qual minha Sala ?","quais as minhas turmas ?"],
+                    "patterns": ['me fale as materia', 'minhas disciplina', ' turmas', ' local', 'diz a horario', 'quero saber as disciplina', 'minhas turma', ' aulas', ' salas', ' classes', ' materias', 'diga a  salas', 'me fale as professores', 'quais as minhas disciplina', 'minhas turmas', 'quero minhas professor', 'quero saber as classes', 'qual é turmas'],
                     "responses": ["Entendi, você deseja saber suas salas","Você deseja saber suas salas ?", "Ah, você quer saber qual sala ? ", "Suas Aulas ?"],
+                    "context": [""]
+                },
+                {
+                    "tag": "bus_info",
+                    "patterns": ['horário do fretado','hora dos fretados','qual hora do onibus','quando sai o busao','minha lotação'],
+                    "responses": ["Fretados","Horarios Fretado"], #provisório
                     "context": [""]
                 },
                 {
@@ -174,6 +180,7 @@ def main():
                 }
             ]
         }
+
     # demo da funcionalide da classe utils para mensagem
     message_utils = MessageUtils()
     message_utils.process_training_data(database,None)
