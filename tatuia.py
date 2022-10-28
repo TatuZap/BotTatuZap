@@ -4,6 +4,7 @@ from keras.preprocessing.text import Tokenizer
 from keras.optimizers import SGD
 from keras.layers import Dense, Activation, Dropout, SpatialDropout1D, LSTM, Embedding
 from keras.models import Sequential
+from keras import metrics
 import tensorflow as tf
 from messageutils import MessageUtils  # nossa classe de pré-processamento
 import warnings
@@ -78,25 +79,32 @@ class TatuIA:
         df = pd.DataFrame(self.message_utils.documents,columns = ["token-frase","classe"])
         df["texto-lstm"] = df["token-frase"].apply( lambda message : " ".join(message))
         df = df.drop("token-frase",axis="columns")
+        print(df)
         MAX_LEN   = len(self.message_utils.vocabulary)
         tokenizer = Tokenizer(MAX_LEN,lower=True)
         tokenizer.fit_on_texts(df['texto-lstm'].values)
         X = tokenizer.texts_to_sequences(df['texto-lstm'].values)
+        print(X)
         self.X = pad_sequences(X, maxlen=MAX_LEN)
         self.Y = pd.get_dummies(df['classe']).values
 
+        print('shape do y {}'.format(self.Y.shape[1]))
+        print('MAX_LEN {}'.format(MAX_LEN))
+
         model = Sequential()
-        model.add(Embedding(MAX_LEN, 100, input_length=self.X.shape[1]))
-        model.add(SpatialDropout1D(0.2))
-        model.add(LSTM(100, dropout=0.2, recurrent_dropout=0.2))
+        model.add(Embedding(MAX_LEN, 50, input_length=self.X.shape[1]))
+        model.add(SpatialDropout1D(0.7))
+        model.add(LSTM(16))
+        model.add(Dropout(0.7))
+        model.add(Dense(16, activation='relu'))
         model.add(Dense(self.Y.shape[1], activation='softmax'))
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=[tf.metrics.Recall()])
 
         return model
 
     def __train(self):
         self.model.fit(self.X,
-                       self.Y, epochs=200, verbose=0)
+                       self.Y, epochs=13, batch_size=1,verbose=1)
     def get_model(self):
         return self.model
 
@@ -110,8 +118,8 @@ class TatuIA:
         print("test loss, test acc:", results)
 
     def __intent_prediction(self, user_message):
-        print(">>> Normalized and Clean user_message: {}.".format(
-            self.message_utils.full_clean_text(user_message)))
+        # print(">>> Normalized and Clean user_message: {}.".format(
+        #     self.message_utils.full_clean_text(user_message)))
         user_message_bag = self.message_utils.bag_for_message(user_message)
 
         response_prediction = self.model.predict(
