@@ -61,15 +61,14 @@ class TatuIA:
         # the deep learning model
         model = Sequential()
         model.add(Dense(128, input_shape=input_shape, activation="relu"))
-        model.add(Dropout(0.2))
+        model.add(Dropout(0.5))
         model.add(Dense(64, activation="relu"))
-        model.add(Dropout(0.2))
+        model.add(Dropout(0.3))
         model.add(Dense(output_shape, activation="softmax"))
         optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, decay=1e-6)
 
-        model.compile(loss='categorical_crossentropy',
-                      optimizer=optimizer,
-                      metrics=[tf.keras.metrics.Precision()])
+        #model.compile(loss='categorical_crossentropy',optimizer=optimizer,metrics=[tf.keras.metrics.AUC()])
+        model.compile(loss='categorical_crossentropy',optimizer=optimizer,metrics=['acc'])
         return model
 
     def __simple_lstm(self):
@@ -104,7 +103,7 @@ class TatuIA:
 
     def __train(self):
         self.model.fit(self.X,
-                       self.Y, epochs=8, batch_size=1,verbose=1)
+                       self.Y, epochs=13, batch_size=1,verbose=1)
     def get_model(self):
         return self.model
 
