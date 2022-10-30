@@ -7,6 +7,7 @@ from keras.models import Sequential
 from keras import metrics
 import tensorflow as tf
 from messageutils import MessageUtils  # nossa classe de pré-processamento
+import geradorfrases as gerador
 import warnings
 import numpy as np
 import pandas as pd
@@ -163,124 +164,20 @@ def main():
         "intents": [
                 {
                     "tag": "welcome",
-                    "patterns": ['oi','ola','boa tarde','bom dia','boa noite','saudações','fala','eae','salve','fala','fala meu bom','grande bot'],
+                    "patterns": [],
                     "responses": ["Olá, serei seu assistente virtual, em que posso te ajudar?","Salve, qual foi ?", "Manda pro pai, Lança a braba", "No que posso te ajudar ?"],
                     "context": [""]
                 },
                 {
-                    "tag": "my_classes",
-                    "patterns": ['minhas grade na quarta',
-  'informe a professor de manha',
-  'quais as minhas turmas de tarde',
-  'diga a  aula de tarde',
-  'quero minhas sala de noite',
-  ' professores ',
-  'diz a turma na sexta',
-  'diga a  turmas de tarde',
-  'quero saber as professor agora',
-  'qual minha disciplinas ',
-  'quero saber as aula na sexta',
-  'diz a local na sexta',
-  'minhas turmas ',
-  'minhas local de manha',
-  'quero saber as horario de noite',
-  'minhas disciplinas na segunda',
-  'me fale as disciplina de tarde',
-  'informe a grade na segunda',
-  'qual é local na terca',
-  'quero minhas salas na quarta',
-  'quero saber as horario na segunda',
-  'quero minhas disciplinas na quarta',
-  'diga a  materia na segunda',
-  'quais as minhas turmas de noite',
-  'quero minhas professores de tarde',
-  'qual minha sala de tarde',
-  ' horario de tarde',
-  'qual minha aula na quinta',
-  'diga a  classes ',
-  'me fale as turma de noite',
-  'quero saber as professor na terca',
-  ' turma ',
-  'qual é aula na terca',
-  'minhas turma ',
-  'qual é professor na sexta',
-  'quais as minhas professores na quinta',
-  ' horario de noite',
-  'qual minha local ',
-  'qual é sala ',
-  'quais as minhas professores ',
-  'quero saber as materias ',
-  'diga a  materias que devo ir',
-  'me fale as materias na quarta',
-  'quero minhas aulas de noite',
-  'quero saber as turmas agora',
-  'qual é aulas de noite',
-  'diz a disciplinas ',
-  'informe a classes que devo ir',
-  'qual é salas de manha',
-  'informe a local '],
+                    "tag": "myclasses",
+                    "patterns": [],
                     "responses": ["Entendi, você deseja saber suas salas","Você deseja saber suas salas ?", "Ah, você quer saber qual sala ? ", "Suas Aulas ?"],
                     "context": [""]
                 },
                 {
-                    "tag": "bus_info",
-                    "patterns": ['quando busao',
-                                'quando busao',
-                                ' onibus',
-                                'quero saber lotação',
-                                'quando sai onibus',
-                                'vai sair fretados',
-                                'qual fretados',
-                                'quero saber fretado',
-                                ' lotação',
-                                ' onibus',
-                                'qual onibus',
-                                'quando busao',
-                                'informe lotação',
-                                'que hora lotação',
-                                ' lotação',
-                                'quando onibus',
-                                ' lotação',
-                                'informe fretado',
-                                'quando fretado',
-                                ' lotação',
-                                ' fretados',
-                                'qual fretados',
-                                'qual onibus',
-                                'quero que sai busao',
-                                'que hora fretado',
-                                ' fretados',
-                                'quero saber fretados',
-                                ' onibus',
-                                ' fretados',
-                                'informe lotação',
-                                'quando sai lotação',
-                                'que hora fretados',
-                                'informe fretados',
-                                ' lotação',
-                                'quando onibus',
-                                'que hora fretados',
-                                'quando sai lotação',
-                                ' fretados',
-                                ' fretado',
-                                'quando sai onibus',
-                                'vai sair busao',
-                                'quero que sai busao',
-                                'quando busao',
-                                ' onibus',
-                                'que hora onibus',
-                                'vai sair fretados',
-                                'informe fretado',
-                                ' lotação',
-                                'que hora fretado',
-                                'vai sair fretados'],
+                    "tag": "businfo",
+                    "patterns": [],
                     "responses": ["Fretados","Horarios Fretado"], #provisório
-                    "context": [""]
-                },
-                {
-                    "tag": "disc_info",
-                    "patterns": ['Gostaria de saber da ementa da disciplina','ementa da materia','quero saber da ementa','quero saber do plano de ensino','quais os requsitos da materia','qual a bibliografia da disciplina'],
-                    "responses": ['Informações da disciplina X','Para a disciplina Y, as informações são as seguintes'],
                     "context": [""]
                 },
                 {
@@ -292,6 +189,8 @@ def main():
             ]
         }
 
+
+    database = gerador.fill_database(database,300)
     # demo da funcionalide da classe utils para mensagem
     message_utils = MessageUtils()
     message_utils.process_training_data(database,None)
@@ -310,7 +209,7 @@ def main():
             #print(">>> Envie uma mensagem para o TatuBot!")
             user_message = input("user: ")
             response, intent = tatu_zap.get_reply(user_message)
-            if intent == "my_classes":
+            if intent == "myclasses":
                 user_ra = tatu_zap.message_utils.is_ra(user_message)
                 if user_ra:
                     print("Tatu: Já estou processando as turmas para o ra {}.".format(user_ra))
