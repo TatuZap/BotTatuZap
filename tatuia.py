@@ -61,9 +61,9 @@ class TatuIA:
         # the deep learning model
         model = Sequential()
         model.add(Dense(128, input_shape=input_shape, activation="relu"))
-        model.add(Dropout(0.5))
+        model.add(Dropout(0.2))
         model.add(Dense(64, activation="relu"))
-        model.add(Dropout(0.3))
+        model.add(Dropout(0.2))
         model.add(Dense(output_shape, activation="softmax"))
         optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, decay=1e-6)
 
@@ -79,32 +79,32 @@ class TatuIA:
         df = pd.DataFrame(self.message_utils.documents,columns = ["token-frase","classe"])
         df["texto-lstm"] = df["token-frase"].apply( lambda message : " ".join(message))
         df = df.drop("token-frase",axis="columns")
-        print(df)
         MAX_LEN   = len(self.message_utils.vocabulary)
         tokenizer = Tokenizer(MAX_LEN,lower=True)
         tokenizer.fit_on_texts(df['texto-lstm'].values)
         X = tokenizer.texts_to_sequences(df['texto-lstm'].values)
-        print(X)
         self.X = pad_sequences(X, maxlen=MAX_LEN)
         self.Y = pd.get_dummies(df['classe']).values
-
-        print('shape do y {}'.format(self.Y.shape[1]))
-        print('MAX_LEN {}'.format(MAX_LEN))
+        # self.Y = np.array(tokenizer.texts_to_sequences(df['classe']))
+        # print('self.X')
+        # print(self.X)
+        # print('self.Y')
+        # print(self.Y)
+        
 
         model = Sequential()
-        model.add(Embedding(MAX_LEN, 50, input_length=self.X.shape[1]))
-        model.add(SpatialDropout1D(0.7))
+        model.add(Embedding(MAX_LEN, 32, input_length=self.X.shape[1]))
         model.add(LSTM(16))
-        model.add(Dropout(0.7))
-        model.add(Dense(16, activation='relu'))
+        model.add(Dense(32, activation='relu'))
         model.add(Dense(self.Y.shape[1], activation='softmax'))
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=[tf.metrics.Recall()])
+        #model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=[tf.metrics.Recall()])
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
 
         return model
 
     def __train(self):
         self.model.fit(self.X,
-                       self.Y, epochs=13, batch_size=1,verbose=1)
+                       self.Y, epochs=8, batch_size=1,verbose=1)
     def get_model(self):
         return self.model
 
@@ -164,20 +164,124 @@ def main():
         "intents": [
                 {
                     "tag": "welcome",
-                    "patterns": ["Oi","Oi, bom dia","Oi, boa tarde", "bom dia", "boa tarde", "boa noite", "oi, boa noite", "olá, boa noite", "oiiiii", "Olá","oiii, como vai?","opa, tudo bem?"],
+                    "patterns": ['oi','ola','boa tarde','bom dia','boa noite','saudações','fala','eae','salve','fala','fala meu bom','grande bot'],
                     "responses": ["Olá, serei seu assistente virtual, em que posso te ajudar?","Salve, qual foi ?", "Manda pro pai, Lança a braba", "No que posso te ajudar ?"],
                     "context": [""]
                 },
                 {
                     "tag": "my_classes",
-                    "patterns": ['me fale as materia', 'minhas disciplina', ' turmas', ' local', 'diz a horario', 'quero saber as disciplina', 'minhas turma', ' aulas', ' salas', ' classes', ' materias', 'diga a  salas', 'me fale as professores', 'quais as minhas disciplina', 'minhas turmas', 'quero minhas professor', 'quero saber as classes', 'qual é turmas'],
+                    "patterns": ['minhas grade na quarta',
+  'informe a professor de manha',
+  'quais as minhas turmas de tarde',
+  'diga a  aula de tarde',
+  'quero minhas sala de noite',
+  ' professores ',
+  'diz a turma na sexta',
+  'diga a  turmas de tarde',
+  'quero saber as professor agora',
+  'qual minha disciplinas ',
+  'quero saber as aula na sexta',
+  'diz a local na sexta',
+  'minhas turmas ',
+  'minhas local de manha',
+  'quero saber as horario de noite',
+  'minhas disciplinas na segunda',
+  'me fale as disciplina de tarde',
+  'informe a grade na segunda',
+  'qual é local na terca',
+  'quero minhas salas na quarta',
+  'quero saber as horario na segunda',
+  'quero minhas disciplinas na quarta',
+  'diga a  materia na segunda',
+  'quais as minhas turmas de noite',
+  'quero minhas professores de tarde',
+  'qual minha sala de tarde',
+  ' horario de tarde',
+  'qual minha aula na quinta',
+  'diga a  classes ',
+  'me fale as turma de noite',
+  'quero saber as professor na terca',
+  ' turma ',
+  'qual é aula na terca',
+  'minhas turma ',
+  'qual é professor na sexta',
+  'quais as minhas professores na quinta',
+  ' horario de noite',
+  'qual minha local ',
+  'qual é sala ',
+  'quais as minhas professores ',
+  'quero saber as materias ',
+  'diga a  materias que devo ir',
+  'me fale as materias na quarta',
+  'quero minhas aulas de noite',
+  'quero saber as turmas agora',
+  'qual é aulas de noite',
+  'diz a disciplinas ',
+  'informe a classes que devo ir',
+  'qual é salas de manha',
+  'informe a local '],
                     "responses": ["Entendi, você deseja saber suas salas","Você deseja saber suas salas ?", "Ah, você quer saber qual sala ? ", "Suas Aulas ?"],
                     "context": [""]
                 },
                 {
                     "tag": "bus_info",
-                    "patterns": ['horário do fretado','hora dos fretados','qual hora do onibus','quando sai o busao','minha lotação'],
+                    "patterns": ['quando busao',
+                                'quando busao',
+                                ' onibus',
+                                'quero saber lotação',
+                                'quando sai onibus',
+                                'vai sair fretados',
+                                'qual fretados',
+                                'quero saber fretado',
+                                ' lotação',
+                                ' onibus',
+                                'qual onibus',
+                                'quando busao',
+                                'informe lotação',
+                                'que hora lotação',
+                                ' lotação',
+                                'quando onibus',
+                                ' lotação',
+                                'informe fretado',
+                                'quando fretado',
+                                ' lotação',
+                                ' fretados',
+                                'qual fretados',
+                                'qual onibus',
+                                'quero que sai busao',
+                                'que hora fretado',
+                                ' fretados',
+                                'quero saber fretados',
+                                ' onibus',
+                                ' fretados',
+                                'informe lotação',
+                                'quando sai lotação',
+                                'que hora fretados',
+                                'informe fretados',
+                                ' lotação',
+                                'quando onibus',
+                                'que hora fretados',
+                                'quando sai lotação',
+                                ' fretados',
+                                ' fretado',
+                                'quando sai onibus',
+                                'vai sair busao',
+                                'quero que sai busao',
+                                'quando busao',
+                                ' onibus',
+                                'que hora onibus',
+                                'vai sair fretados',
+                                'informe fretado',
+                                ' lotação',
+                                'que hora fretado',
+                                'vai sair fretados'],
                     "responses": ["Fretados","Horarios Fretado"], #provisório
+                    "context": [""]
+                },
+                {
+                    "tag": "disc_info",
+                    "patterns": ['Gostaria de saber da ementa da disciplina','ementa da materia','quero saber da ementa','quero saber do plano de ensino','quais os requsitos da materia','qual a bibliografia da disciplina'],
+                    "responses": ['Informações da disciplina X','Para a disciplina Y, as informações são as seguintes'],
                     "context": [""]
                 },
                 {
