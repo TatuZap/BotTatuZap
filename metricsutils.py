@@ -87,8 +87,8 @@ def main():
     #Y = ['myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo','anything_else','anything_else','anything_else','anything_else']
     n = 200
     db_test = gerador.fill_treino(database,n)    
-    X = db_test['intents'][0]['patterns'][0:n]+db_test['intents'][1]['patterns'][0:n]+db_test['intents'][2]['patterns'][0:n]+gerador.gerar_anything(n)
-    Y = ['welcome']*n+['myclasses']*n+['businfo']*n+['anything_else']*n
+    X = db_test['intents'][0]['patterns'][0:n]+db_test['intents'][1]['patterns'][0:n]+db_test['intents'][2]['patterns'][0:n]+db_test['intents'][3]['patterns'][0:n]+db_test['intents'][4]['patterns'][0:n]+gerador.gerar_anything(n)
+    Y = ['welcome']*n+['myclasses']*n+['businfo']*n+['discinfo']*n+['ru']*n+['anything_else']*n
 
     
     list_predict = [(tatu_zap.get_predict(i)) for i in X]
