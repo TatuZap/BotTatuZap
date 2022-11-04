@@ -23,7 +23,9 @@ from nltk import word_tokenize, pos_tag
 from nltk.stem import WordNetLemmatizer
 from enelvo.normaliser import Normaliser
 
-# deixe a linha abixo sem comentários somente se precisar dessas bibliotecas de nlp
+from datetime import datetime
+
+# deixe a linha abaixo sem comentários somente se precisar dessas bibliotecas de nlp
 
 @dataclass
 class MessageUtils:    
@@ -154,6 +156,26 @@ class MessageUtils:
         lenght_constraint = lambda x : len(x) == 8 or len(x) == 11
         valid_ra = list(filter(lenght_constraint,possible_ra))
         return None if valid_ra == [] else valid_ra[0]
+
+    def check_origin(self, message):
+        lista = []
+        if message == "SA":  # fix me
+            now = datetime.now()
+            current_time = now.strftime("%H:%M").split(":")
+            lista.append("SA")
+            lista.append(current_time[0])
+            lista.append(current_time[1])
+
+        elif message == "SBC": # fix me
+            now = datetime.now()
+            current_time = now.strftime("%H:%M").split(":")
+            lista.append("SBC")
+            lista.append(current_time[0])
+            lista.append(current_time[1])
+
+        return None if lista == [] else lista
+        
+
 def main():
     database = {
         "intents": [

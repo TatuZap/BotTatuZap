@@ -118,8 +118,8 @@ class TatuIA:
         print("test loss, test acc:", results)
 
     def __intent_prediction(self, user_message):
-        # print(">>> Normalized and Clean user_message: {}.".format(
-        #     self.message_utils.full_clean_text(user_message)))
+        print(">>> Normalized and Clean user_message: {}.".format(
+           self.message_utils.full_clean_text(user_message)))
         user_message_bag = self.message_utils.bag_for_message(user_message)
 
         response_prediction = self.model.predict(
@@ -137,7 +137,7 @@ class TatuIA:
             results = [[0, response_prediction[0]]]
 
         results.sort(key=lambda x: x[1], reverse=True)
-        # print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
+        print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
         return [{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results]
 
     def get_reply(self, user_message):
@@ -214,7 +214,7 @@ def main():
     #tatu_zap.eval_model()
     
     print(">>> Demo da funcionalidade de reconhecimento de intenção do TatuBot.")
-    print(">>> Inicialmente a I.A foi treinada com somente duas inteções (welcome,my_classes).")
+    print(">>> Inicialmente a I.A foi treinada com cinco intenções (welcome,myclasses,businfo,discinfo,ru).")
 
     while True:
         try:
@@ -227,12 +227,25 @@ def main():
                     print("Tatu: Já estou processando as turmas para o ra {}.".format(user_ra))
                 else:
                     while True:
-                        print("Tatu: Você solicitou informações sobre suas turmas, agora insira seu ra!.")
+                        print("Tatu: Você solicitou informações sobre suas turmas, agora insira seu ra!")
                         expected_ra = input()
                         user_ra = tatu_zap.message_utils.is_ra(expected_ra)
                         if user_ra:
                             print("Tatu: Já estou processando as turmas para o ra {}.".format(user_ra))
                             break
+            if intent == "businfo":
+                while True:
+                    print("Tatu: Por favor, para conseguirmos identificar qual fretado você quer, diga onde está (SA/SBC).")
+                    expected_local = input()
+                    user_localtime =  tatu_zap.message_utils.check_origin(expected_local)
+                    if user_localtime:
+                        print("Tatu: Já estou buscando o horário de partida do próximo fretado que sai de {} ás {}:{}h".format(user_localtime[0], user_localtime[1], user_localtime[2]))
+                        break
+            if intent == "discinfo":
+                print("Tatu: Digite apenas o nome da matéria (ou sigla) que você deseja! ")
+                expected_disc = input()
+                print("Tatu: Estou buscando a ementa da disciplina {}.".format(expected_disc))
+
             else:
                 print("Tatu: {}.".format(response)) 
 
