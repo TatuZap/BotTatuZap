@@ -2,7 +2,7 @@ import os
 import json
 import pickle
 from xml.dom.expatbuilder import InternalSubsetExtractor
-from matplotlib.pyplot import get
+# from matplotlib.pyplot import get
 import nltk
 import random
 import pandas as pd

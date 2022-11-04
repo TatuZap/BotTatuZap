@@ -15,7 +15,7 @@ def fill_database(database, n):
             # list3 = ['minhas salas', 'minhas turmas', 'minha grade', 'minhas salas de aula', 'minhas classes', 'minha próxima aula', 'a próxima aula',
             #         'a turma seguinte', 'a seguinte sala', 'as salas', 'a sala','os professores','meus horários','minhas matérias','minha matérias','próximo professor','que sala devo ir']
             list1  = ['minhas', 'quero minhas', 'quais as minhas', 'qual minha', 'diga a ','informe a','quero saber as', 'me fale as','qual é', 'diz a']+['']*10
-            list2   = ['materias', 'materia', 'sala', 'professor','local','turma','turmas','professores','disciplinas','salas','aula','aulas','grade','horario','classe','classes']
+            list2   = ['materias', 'materia', 'sala','salas','professor','professora','professoras','docente','docentes','local','turma','turmas','professores','disciplinas','aula','aulas','grade','horario','horarios','classe','classes']
             list3 = ['agora','que devo ir','na segunda','na terca','na quarta','na quinta','na sexta','de manha','de tarde','de noite']+['']*7
 
             for i in range(n):
@@ -26,13 +26,13 @@ def fill_database(database, n):
 
         if intent["tag"] == 'businfo':
             # sinonimo de QUERO
-            list_bus1 = ['quero', 'desejo', 'pretendo', 'necessito', 'preciso', 'procuro']
+            list_bus1 = ['quero', 'desejo', 'pretendo', 'necessito', 'preciso', 'procuro'] + ['']*6
             # sinonimos de SABER
-            list_bus2 = ['saber', 'entender', 'me informar', 'conhecer']
+            list_bus2 = ['saber', 'entender', 'me informar', 'conhecer'] + ['']*4
             # variacoes para QUE HORAS
-            list_bus3 = ['que horas', 'que momento', 'quando']
+            list_bus3 = ['que horas', 'que momento', 'quando'] + ['']*3
             # sinonimos de PARTIR
-            list_bus4 = ['','sai', 'parte']
+            list_bus4 = ['sai', 'parte'] + ['']*2
             # sinonimos de ONIBUS
             list_bus5 = ['o onibus', 'o busao', 'o fretado', 'o transporte', 'a lotação','o circular']
             
@@ -49,28 +49,29 @@ def fill_database(database, n):
             list_disc4 = ['da disciplina','da matéria','da cadeira','do curso','disciplina']+['']*4
 
             for i in range(n):
+                a = random.choice(list_disc1)+' '+random.choice(list_disc2)+' '+random.choice(list_disc3)+' '+random.choice(list_disc4)
                 if a != "":
-                    a = random.choice(list_disc1)+' '+random.choice(list_disc2)+' '+random.choice(list_disc3)+' '+random.choice(list_disc4)
                     intent['patterns'].append (a)
                 
         if intent["tag"] == 'ru':
             list_disc1 = ['quero', 'desejo', 'pretendo', 'necessito', 'preciso', 'procuro']+ ['']*6
             list_disc2 = ['saber', 'entender', 'me informar', 'conhecer'] + ['']*4
-            list_disc3 = ['o que será no almoço','o que será no jantar','o que tem de comida', 'qual a refeição', 'o cardápio', 'o que temos no ru','o q tem pra comer','restaurante universiário','cardápio','qual a comida','o que tem pra almoçar','o que tem de janta']
+            list_disc3 = ['o que será no almoço','o que será no jantar','qual o almoço','qual o jantar','qual a janta','o que tem de comida','o que tem de refeição', 'qual a refeição', 'o cardápio', 'o que temos no ru','o q tem pra comer','restaurante universiário','cardápio','qual a comida','o que tem pra almoçar','o que tem de janta']
 
             for i in range(n):
+                a = random.choice(list_disc1)+' '+random.choice(list_disc2)+' '+random.choice(list_disc3)
                 if a != "":
-                    a = random.choice(list_disc1)+' '+random.choice(list_disc2)+' '+random.choice(list_disc3)
                     intent['patterns'].append (a)
                     
         if intent["tag"] == 'welcome':
-            list_wel1 = ['oi','ola','salve','eae', 'hey', 'opa']
-            list_wel2 = ['bom dia','boa tarde','boa noite', 'como vai', 'tudo bem', 'como voce esta']
+            list_wel1 = ['oi','ola','salve','eae', 'hey', 'opa']+[""]*3
+            list_wel2 = ['bom dia','boa tarde','boa noite', 'como vai', 'tudo bem', 'como voce esta']+[""]*3
             list_wel3 = ['bot','tatu','tatuzap']+[""]*3
 
             for i in range(n):
                 a = random.choice(list_wel1)+' '+random.choice(list_wel2)+' '+random.choice(list_wel3)
-                intent['patterns'].append (a)
+                if a != "":
+                    intent['patterns'].append (a)
                 
     return database
 
