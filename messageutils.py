@@ -174,14 +174,16 @@ class MessageUtils:
         valid_ra = list(filter(lenght_constraint,possible_ra))
         return None if valid_ra == [] else valid_ra[0]
 
+        
+
     def check_origin(self, message):
         lista = [] # Origen, Destino, Hora,Minuto
-        origemSA = ['de santo andré','de sa','de sta']
-        origemSBC = ['de são bernardo','de sbc','de sao bernardo']
-        destinoSA = ['para santo andré','para sa','para sta','pra santo andré','pra sa','pra sta']
-        destinoSBC = ['para são bernardo','para sbc','para sao bernardo','pra são bernardo','pra sbc','pra sao bernardo']
-        origem = 'SA' if any(element in message.lower() for element in origemSA) else 'SBC' if any(element in message.lower() for element in origemSBC) else None
-        destino = 'SA' if any(element in message.lower() for element in destinoSA) else 'SBC' if any(element in message.lower() for element in destinoSBC) else None
+        origemSA = ['de santo andre','de sa','de sta']
+        origemSBC = ['de sao bernardo','de sbc','de sao bernardo']
+        destinoSA = ['para santo andre','para sa','para sta','pra santo andre','pra sa','pra sta']
+        destinoSBC = ['para sao bernardo','para sbc','pra sao bernardo','pra sbc']
+        origem = 'SA' if any(element in unidecode.unidecode(message.lower()) for element in origemSA) else 'SBC' if any(element in unidecode.unidecode(message.lower()) for element in origemSBC) else None
+        destino = 'SBC' if any(element in unidecode.unidecode(message.lower()) for element in destinoSBC) else 'SA' if any(element in unidecode.unidecode(message.lower()) for element in destinoSA) else None
 
         if origem and destino :
             now = datetime.now()

@@ -221,7 +221,7 @@ def main():
                 else:
                     while True:
                         print("Tatu: Você solicitou informações sobre suas turmas, agora insira seu ra!")
-                        expected_ra = input()
+                        expected_ra = input('user: ')
                         user_ra = tatu_zap.message_utils.is_ra(expected_ra)
                         if user_ra:
                             print("Tatu: Já estou processando as turmas para o ra {}.".format(user_ra))
@@ -234,7 +234,7 @@ def main():
                         break
                     else :
                         print("Tatu: Por favor, para conseguirmos identificar qual fretado você quer, diga de onde você quer ir (de SA / de SBC) para onde (para SA/ para SBC)")
-                        expected_local = input()
+                        expected_local = input('user: ')
                         user_localtime =  tatu_zap.message_utils.check_origin(expected_local)
                         
             elif intent == "discinfo": #TODO
