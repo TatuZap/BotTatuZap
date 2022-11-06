@@ -79,8 +79,8 @@ def main():
             }
         ]
     }
-
-    database = gerador.fill_database(database,300)
+    n = 100
+    database = gerador.fill_database(database,3*n)
     #print(database)
     message_utils = MessageUtils()
     message_utils.process_training_data(database,None)
@@ -89,11 +89,14 @@ def main():
     tatu_zap = TatuIA("", message_utils=message_utils,lstm = False)
     tatu_zap.print_model()
     #tatu_zap.eval_model()
-    #X = ['informe a turmas', 'quero saber as sala', 'quais as minhas aulas', ' classes', ' professor', ' local', 'quais as minhas disciplina', 'quero saber as professores', 'informe a disciplina', 'quero saber as grade', ' aulas', 'qual é aulas', 'qual minha classes', 'quais as minhas materias', 'diz a materia', 'quero minhas disciplinas', 'minhas classe', 'minhas disciplinas', 'qual é materias', 'informe a materia', 'Oi', 'Oi, bom dia', 'Oi, boa tarde', 'bom dia', 'boa tarde', 'boa noite', 'oi, boa noite', 'olá, boa noite', 'oiiiii', 'Olá', 'oiii, como vai?', 'opa, tudo bem?', 'quando sai onibus', ' lotação', 'qual busao', 'quero saber fretado', 'qual fretado', 'informe fretado', 'quero que sai fretado', 'informe lotação', 'vai sair busao', 'quero saber fretados', ' busao', 'quando onibus', 'que hora lotação', 'que hora fretado',"asdasdasdas","cachorro voador","esquilo de chapeu", "gato de botas"]
-    #Y = ['myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'myclasses', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'welcome', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo', 'businfo','anything_else','anything_else','anything_else','anything_else']
-    n = 200
-    db_test = gerador.fill_treino(database,n)    
-    X = db_test['intents'][0]['patterns'][0:n]+db_test['intents'][1]['patterns'][0:n]+db_test['intents'][2]['patterns'][0:n]+db_test['intents'][3]['patterns'][0:n]+db_test['intents'][4]['patterns'][0:n]+gerador.gerar_anything(n)
+  
+    
+    db_test = gerador.fill_treino(database,n)
+    X = []    
+    for a in db_test['intents']:
+        if a['tag'] != 'anything_else': X += a['patterns'][0:n]
+    X = X + gerador.gerar_anything(n)
+    
     Y = ['welcome']*n+['myclasses']*n+['businfo']*n+['discinfo']*n+['ru']*n+['anything_else']*n
 
     

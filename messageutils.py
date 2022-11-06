@@ -22,6 +22,10 @@ from nltk.corpus import stopwords
 from nltk import word_tokenize, pos_tag
 from nltk.stem import WordNetLemmatizer
 from enelvo.normaliser import Normaliser
+from tensorflow.keras.utils import pad_sequences
+from keras.preprocessing.text import Tokenizer
+
+
 
 from datetime import datetime
 
@@ -144,6 +148,19 @@ class MessageUtils:
     def show_data(self):
         return pd.DataFrame(self.documents, columns = ['Message_tokens', 'Intent'])
     
+    def preprocess_lstm(self):
+        df = pd.DataFrame(self.message_utils.documents,columns = ["token-frase","classe"])
+        df["texto-lstm"] = df["token-frase"].apply( lambda message : " ".join(message))
+        df = df.drop("token-frase",axis="columns")
+        MAX_LEN   = len(self.message_utils.vocabulary)
+        tokenizer = Tokenizer(MAX_LEN,lower=True)
+        tokenizer.fit_on_texts(df['texto-lstm'].values)
+        X = tokenizer.texts_to_sequences(df['texto-lstm'].values)
+        self.X = pad_sequences(X, maxlen=MAX_LEN)
+        self.Y = pd.get_dummies(df['classe']).values
+        
+
+
     def __valid_path__(self):
         return os.path.exists(self.dfa_file)
     
@@ -158,20 +175,21 @@ class MessageUtils:
         return None if valid_ra == [] else valid_ra[0]
 
     def check_origin(self, message):
-        lista = []
-        if message == "SA":  # fix me
-            now = datetime.now()
-            current_time = now.strftime("%H:%M").split(":")
-            lista.append("SA")
-            lista.append(current_time[0])
-            lista.append(current_time[1])
+        lista = [] # Origen, Destino, Hora,Minuto
+        origemSA = ['de santo andré','de sa','de sta']
+        origemSBC = ['de são bernardo','de sbc','de sao bernardo']
+        destinoSA = ['para santo andré','para sa','para sta','pra santo andré','pra sa','pra sta']
+        destinoSBC = ['para são bernardo','para sbc','para sao bernardo','pra são bernardo','pra sbc','pra sao bernardo']
+        origem = 'SA' if any(element in message.lower() for element in origemSA) else 'SBC' if any(element in message.lower() for element in origemSBC) else None
+        destino = 'SA' if any(element in message.lower() for element in destinoSA) else 'SBC' if any(element in message.lower() for element in destinoSBC) else None
 
-        elif message == "SBC": # fix me
+        if origem and destino :
             now = datetime.now()
-            current_time = now.strftime("%H:%M").split(":")
-            lista.append("SBC")
-            lista.append(current_time[0])
-            lista.append(current_time[1])
+            current_time = now.strftime("%H:%M")
+            lista.append(origem)
+            lista.append(destino)
+            lista.append(current_time)
+
 
         return None if lista == [] else lista
         

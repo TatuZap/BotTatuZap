@@ -85,11 +85,6 @@ class TatuIA:
         X = tokenizer.texts_to_sequences(df['texto-lstm'].values)
         self.X = pad_sequences(X, maxlen=MAX_LEN)
         self.Y = pd.get_dummies(df['classe']).values
-        # self.Y = np.array(tokenizer.texts_to_sequences(df['classe']))
-        # print('self.X')
-        # print(self.X)
-        # print('self.Y')
-        # print(self.Y)
         
 
         model = Sequential()
@@ -118,8 +113,7 @@ class TatuIA:
         print("test loss, test acc:", results)
 
     def __intent_prediction(self, user_message):
-        print(">>> Normalized and Clean user_message: {}.".format(
-           self.message_utils.full_clean_text(user_message)))
+        #print(">>> Normalized and Clean user_message: {}.".format(self.message_utils.full_clean_text(user_message)))
         user_message_bag = self.message_utils.bag_for_message(user_message)
 
         response_prediction = self.model.predict(
@@ -137,7 +131,7 @@ class TatuIA:
             results = [[0, response_prediction[0]]]
 
         results.sort(key=lambda x: x[1], reverse=True)
-        print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
+        #print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
         return [{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results]
 
     def get_reply(self, user_message):
@@ -186,7 +180,7 @@ def main():
                 "responses": ['Informações da disciplina X','Para a disciplina Y, as informações são as seguintes: '],
                 "context": [""]
             },
-        {
+            {
                 "tag": "ru",
                 "patterns": [],
                 "responses": ['O cárdapio de hoje é esse:','Para o almoço temos:', 'Para o jantar teremos:'], # provisório
@@ -202,7 +196,7 @@ def main():
         }
 
 
-    database = gerador.fill_database(database,500)
+    database = gerador.fill_database(database,50)
     # demo da funcionalide da classe utils para mensagem
     message_utils = MessageUtils()
     message_utils.process_training_data(database,None)
@@ -215,10 +209,9 @@ def main():
     
     print(">>> Demo da funcionalidade de reconhecimento de intenção do TatuBot.")
     print(">>> Inicialmente a I.A foi treinada com cinco intenções (welcome,myclasses,businfo,discinfo,ru).")
-
+    print(">>> Envie uma mensagem para o TatuBot!")
     while True:
         try:
-            #print(">>> Envie uma mensagem para o TatuBot!")
             user_message = input("user: ")
             response, intent = tatu_zap.get_reply(user_message)
             if intent == "myclasses":
@@ -233,15 +226,18 @@ def main():
                         if user_ra:
                             print("Tatu: Já estou processando as turmas para o ra {}.".format(user_ra))
                             break
-            if intent == "businfo":
+            elif intent == "businfo":
+                user_localtime =  tatu_zap.message_utils.check_origin(user_message)
                 while True:
-                    print("Tatu: Por favor, para conseguirmos identificar qual fretado você quer, diga onde está (SA/SBC).")
-                    expected_local = input()
-                    user_localtime =  tatu_zap.message_utils.check_origin(expected_local)
                     if user_localtime:
-                        print("Tatu: Já estou buscando o horário de partida do próximo fretado que sai de {} ás {}:{}h".format(user_localtime[0], user_localtime[1], user_localtime[2]))
+                        print("Tatu: Já estou buscando o horário de partida do próximo fretado que sai de {} para {} as {}".format(user_localtime[0], user_localtime[1], user_localtime[2]))
                         break
-            if intent == "discinfo":
+                    else :
+                        print("Tatu: Por favor, para conseguirmos identificar qual fretado você quer, diga de onde você quer ir (de SA / de SBC) para onde (para SA/ para SBC)")
+                        expected_local = input()
+                        user_localtime =  tatu_zap.message_utils.check_origin(expected_local)
+                        
+            elif intent == "discinfo": #TODO
                 print("Tatu: Digite apenas o nome da matéria (ou sigla) que você deseja! ")
                 expected_disc = input()
                 print("Tatu: Estou buscando a ementa da disciplina {}.".format(expected_disc))
