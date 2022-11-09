@@ -4,8 +4,10 @@ from keras.preprocessing.text import Tokenizer
 from keras.optimizers import SGD
 from keras.layers import Dense, Activation, Dropout, SpatialDropout1D, LSTM, Embedding
 from keras.models import Sequential
+from keras import metrics
 import tensorflow as tf
 from messageutils import MessageUtils  # nossa classe de pré-processamento
+import geradorfrases as gerador
 import warnings
 import numpy as np
 import pandas as pd
@@ -14,6 +16,9 @@ import pickle
 import json
 import os
 from unittest import result
+
+from src.load.DB import get_db,DBCollections
+
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # tensorflow tags
 # 0 = all messages are logged (default behavior)
@@ -66,9 +71,8 @@ class TatuIA:
         model.add(Dense(output_shape, activation="softmax"))
         optimizer = tf.keras.optimizers.Adam(learning_rate=0.01, decay=1e-6)
 
-        model.compile(loss='categorical_crossentropy',
-                      optimizer=optimizer,
-                      metrics=[tf.keras.metrics.Precision()])
+        #model.compile(loss='categorical_crossentropy',optimizer=optimizer,metrics=[tf.keras.metrics.AUC()])
+        model.compile(loss='categorical_crossentropy',optimizer=optimizer,metrics=['acc'])
         return model
 
     def __simple_lstm(self):
@@ -84,19 +88,21 @@ class TatuIA:
         X = tokenizer.texts_to_sequences(df['texto-lstm'].values)
         self.X = pad_sequences(X, maxlen=MAX_LEN)
         self.Y = pd.get_dummies(df['classe']).values
+        
 
         model = Sequential()
-        model.add(Embedding(MAX_LEN, 100, input_length=self.X.shape[1]))
-        model.add(SpatialDropout1D(0.2))
-        model.add(LSTM(100, dropout=0.2, recurrent_dropout=0.2))
+        model.add(Embedding(MAX_LEN, 32, input_length=self.X.shape[1]))
+        model.add(LSTM(16))
+        model.add(Dense(32, activation='relu'))
         model.add(Dense(self.Y.shape[1], activation='softmax'))
-        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+        #model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=[tf.metrics.Recall()])
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['acc'])
 
         return model
 
     def __train(self):
         self.model.fit(self.X,
-                       self.Y, epochs=200, verbose=0)
+                       self.Y, epochs=13, batch_size=1,verbose=1)
     def get_model(self):
         return self.model
 
@@ -110,8 +116,7 @@ class TatuIA:
         print("test loss, test acc:", results)
 
     def __intent_prediction(self, user_message):
-        print(">>> Normalized and Clean user_message: {}.".format(
-            self.message_utils.full_clean_text(user_message)))
+        #print(">>> Normalized and Clean user_message: {}.".format(self.message_utils.full_clean_text(user_message)))
         user_message_bag = self.message_utils.bag_for_message(user_message)
 
         response_prediction = self.model.predict(
@@ -129,7 +134,7 @@ class TatuIA:
             results = [[0, response_prediction[0]]]
 
         results.sort(key=lambda x: x[1], reverse=True)
-        # print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
+        #print([{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results])
         return [{"intent": self.message_utils.classes[r[0]], "probability": str(r[1])} for r in results]
 
     def get_reply(self, user_message):
@@ -147,33 +152,54 @@ class TatuIA:
 
     def get_predict(self, user_message):
         # a classe mais provável
-        return self.__intent_prediction(user_message)[0]['intents']
+        return self.__intent_prediction(user_message)[0]['intent']
 
 
 
 def main():
     database = {
         "intents": [
-                {
-                    "tag": "welcome",
-                    "patterns": ["Oi","Oi, bom dia","Oi, boa tarde", "bom dia", "boa tarde", "boa noite", "oi, boa noite", "olá, boa noite", "oiiiii", "Olá","oiii, como vai?","opa, tudo bem?"],
-                    "responses": ["Olá, serei seu assistente virtual, em que posso te ajudar?","Salve, qual foi ?", "Manda pro pai, Lança a braba", "No que posso te ajudar ?"],
-                    "context": [""]
-                },
-                {
-                    "tag": "my_classes",
-                    "patterns": ["oi, Quais são as minhas matérias ?","Quais são as minhas matérias ?","olá Quais são as minhas matérias de hoje ? ","Bom dia, Quais são as minhas disciplinas de hoje ? ", "Que aulas eu tenho Hoje","oi, ola, bom dia me fale minhas turmas", "que sala eu devo ir?", "Qual minha Sala ?","quais as minhas turmas ?"],
-                    "responses": ["Entendi, você deseja saber suas salas","Você deseja saber suas salas ?", "Ah, você quer saber qual sala ? ", "Suas Aulas ?"],
-                    "context": [""]
-                },
-                {
-                    "tag": "anything_else",
-                    "patterns": [],
-                    "responses": ["Desculpa, não entendi o que você falou, tente novamente!","Não compreendi a sua solicitação, talvez eu possa te ajudar"],
-                    "context": [""]
-                }
-            ]
+            {
+                "tag": "welcome",
+                "patterns": [],
+                "responses": ["Olá, serei seu assistente virtual, em que posso te ajudar?","Salve, qual foi ?", "Manda pro pai, Lança a braba", "No que posso te ajudar ?"],
+                "context": [""]
+            },
+            {
+                "tag": "myclasses",
+                "patterns": [],
+                "responses": ["Entendi, você deseja saber suas salas","Você deseja saber suas salas ?", "Ah, você quer saber qual sala ? ", "Suas Aulas ?"],
+                "context": [""]
+            },
+            {
+                "tag": "businfo",
+                "patterns": [],
+                "responses": ["Esses são os horários dos fretados","Horarios dos fretados: ", "Ah, você quer saber o horário dos fretados"],
+                "context": [""]
+            },
+            {
+                "tag": "discinfo",
+                "patterns": [],
+                "responses": ['Informações da disciplina X','Para a disciplina Y, as informações são as seguintes: '],
+                "context": [""]
+            },
+            {
+                "tag": "ru",
+                "patterns": [],
+                "responses": ['O cárdapio de hoje é esse:','Para o almoço temos:', 'Para o jantar teremos:'], # provisório
+                "context": [""]
+            },
+            {
+                "tag": "anything_else",
+                "patterns": [],
+                "responses": ["Desculpa, não entendi o que você falou, tente novamente!","Não compreendi a sua solicitação, talvez eu possa te ajudar", "Por favor, digite novamente"],
+                "context": [""]
+            }
+        ]
         }
+
+
+    database = gerador.fill_database(database,50)
     # demo da funcionalide da classe utils para mensagem
     message_utils = MessageUtils()
     message_utils.process_training_data(database,None)
@@ -184,26 +210,63 @@ def main():
 
     #tatu_zap.eval_model()
     
-    print(">>> Demo da funcionalidade de reconhecimento de intenção do TatuBot.")
-    print(">>> Inicialmente a I.A foi treinada com somente duas inteções (welcome,my_classes).")
+    turmas_por_ra_collection = get_db[DBCollections.TURMAS_POR_RA]
 
+    def turmas(RA):
+        QUERY = {"RA": str(RA)}
+        result = list(turmas_por_ra_collection.find(QUERY))
+        lista = result[0]["TURMAS"]
+        for res in lista:del res['_id']
+        lista_clean = [dict(item) for item in {tuple(dict.items()) for dict in lista}]
+        for disciplina in lista_clean:
+            teoria = disciplina['HORÁRIO TEORIA']
+            pratica = disciplina['HORÁRIO PRÁTICA']
+            nome = disciplina['DISCIPLINA - TURMA']
+
+            if teoria == 0:
+                print('Disciplina: {}, Horário Prática: {}'.format(nome,pratica)) 
+            if pratica == 0:
+                print('Disciplina: {}, Horário Teoria: {}'.format(nome,teoria)) 
+        return lista_clean
+
+
+
+    print(">>> Demo da funcionalidade de reconhecimento de intenção do TatuBot.")
+    print(">>> Inicialmente a I.A foi treinada com cinco intenções (welcome,myclasses,businfo,discinfo,ru).")
+    print(">>> Envie uma mensagem para o TatuBot!")
     while True:
         try:
-            #print(">>> Envie uma mensagem para o TatuBot!")
             user_message = input("user: ")
             response, intent = tatu_zap.get_reply(user_message)
-            if intent == "my_classes":
+            if intent == "myclasses":
                 user_ra = tatu_zap.message_utils.is_ra(user_message)
                 if user_ra:
-                    print("Tatu: Já estou processando as turmas para o ra {}.".format(user_ra))
+                    turmas(user_ra)
                 else:
                     while True:
-                        print("Tatu: Você solicitou informações sobre suas turmas, agora insira seu ra!.")
-                        expected_ra = input()
+                        print("Tatu: Você solicitou informações sobre suas turmas, agora insira seu ra!")
+                        expected_ra = input('user: ')
                         user_ra = tatu_zap.message_utils.is_ra(expected_ra)
                         if user_ra:
-                            print("Tatu: Já estou processando as turmas para o ra {}.".format(user_ra))
+                            #print("Tatu: Já estou processando as turmas para o ra {}.".format(user_ra))
+                            turmas(user_ra)
                             break
+            elif intent == "businfo":
+                user_localtime =  tatu_zap.message_utils.check_origin(user_message)
+                while True:
+                    if user_localtime:
+                        print("Tatu: Já estou buscando o horário de partida do próximo fretado que sai de {} para {} as {}".format(user_localtime[0], user_localtime[1], user_localtime[2]))
+                        break
+                    else :
+                        print("Tatu: Por favor, para conseguirmos identificar qual fretado você quer, diga de onde você quer ir (de SA / de SBC) para onde (para SA/ para SBC)")
+                        expected_local = input('user: ')
+                        user_localtime =  tatu_zap.message_utils.check_origin(expected_local)
+                        
+            elif intent == "discinfo": #TODO
+                print("Tatu: Digite apenas o nome da matéria (ou sigla) que você deseja! ")
+                expected_disc = input()
+                print("Tatu: Estou buscando a ementa da disciplina {}.".format(expected_disc))
+
             else:
                 print("Tatu: {}.".format(response)) 
 

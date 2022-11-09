@@ -2,7 +2,7 @@ import os
 import json
 import pickle
 from xml.dom.expatbuilder import InternalSubsetExtractor
-from matplotlib.pyplot import get
+# from matplotlib.pyplot import get
 import nltk
 import random
 import pandas as pd
@@ -22,8 +22,14 @@ from nltk.corpus import stopwords
 from nltk import word_tokenize, pos_tag
 from nltk.stem import WordNetLemmatizer
 from enelvo.normaliser import Normaliser
+from tensorflow.keras.utils import pad_sequences
+from keras.preprocessing.text import Tokenizer
 
-# deixe a linha abixo sem comentários somente se precisar dessas bibliotecas de nlp
+
+
+from datetime import datetime
+
+# deixe a linha abaixo sem comentários somente se precisar dessas bibliotecas de nlp
 
 @dataclass
 class MessageUtils:    
@@ -142,6 +148,19 @@ class MessageUtils:
     def show_data(self):
         return pd.DataFrame(self.documents, columns = ['Message_tokens', 'Intent'])
     
+    def preprocess_lstm(self):
+        df = pd.DataFrame(self.message_utils.documents,columns = ["token-frase","classe"])
+        df["texto-lstm"] = df["token-frase"].apply( lambda message : " ".join(message))
+        df = df.drop("token-frase",axis="columns")
+        MAX_LEN   = len(self.message_utils.vocabulary)
+        tokenizer = Tokenizer(MAX_LEN,lower=True)
+        tokenizer.fit_on_texts(df['texto-lstm'].values)
+        X = tokenizer.texts_to_sequences(df['texto-lstm'].values)
+        self.X = pad_sequences(X, maxlen=MAX_LEN)
+        self.Y = pd.get_dummies(df['classe']).values
+        
+
+
     def __valid_path__(self):
         return os.path.exists(self.dfa_file)
     
@@ -154,6 +173,29 @@ class MessageUtils:
         lenght_constraint = lambda x : len(x) == 8 or len(x) == 11
         valid_ra = list(filter(lenght_constraint,possible_ra))
         return None if valid_ra == [] else valid_ra[0]
+
+        
+
+    def check_origin(self, message):
+        lista = [] # Origen, Destino, Hora,Minuto
+        origemSA = ['de santo andre','de sa','de sta']
+        origemSBC = ['de sao bernardo','de sbc','de sao bernardo']
+        destinoSA = ['para santo andre','para sa','para sta','pra santo andre','pra sa','pra sta']
+        destinoSBC = ['para sao bernardo','para sbc','pra sao bernardo','pra sbc']
+        origem = 'SA' if any(element in unidecode.unidecode(message.lower()) for element in origemSA) else 'SBC' if any(element in unidecode.unidecode(message.lower()) for element in origemSBC) else None
+        destino = 'SBC' if any(element in unidecode.unidecode(message.lower()) for element in destinoSBC) else 'SA' if any(element in unidecode.unidecode(message.lower()) for element in destinoSA) else None
+
+        if origem and destino :
+            now = datetime.now()
+            current_time = now.strftime("%H:%M")
+            lista.append(origem)
+            lista.append(destino)
+            lista.append(current_time)
+
+
+        return None if lista == [] else lista
+        
+
 def main():
     database = {
         "intents": [
